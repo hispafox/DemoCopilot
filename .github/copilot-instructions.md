@@ -27,7 +27,7 @@ DemoCopilot/
 
 ## Convenciones de código
 
-- Idioma del código: **inglés** (nombres de clases, métodos, variables).
+- Idioma del código: **castellano** (nombres de clases, métodos, variables).
 - Idioma de comentarios y mensajes de UI: **español** (es una demo para hispanohablantes).
 - Siempre inyectar dependencias por constructor, nunca `new` directo de servicios.
 - Usar `async/await` en todos los métodos que accedan a base de datos.
