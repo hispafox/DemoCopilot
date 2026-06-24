@@ -48,7 +48,7 @@ Si `docs/analisis-diseño.md` no existe, detener y pedir al usuario que primero 
 
 ### Paso 2 — Localizar el proyecto y verificar qué servicios existen
 
-Buscar el fichero `.csproj` del proyecto principal (excluir proyectos de tests). La carpeta `Services/` siempre es relativa a ese `.csprojo`.
+Buscar el fichero `.csproj` del proyecto principal (excluir proyectos de tests). La carpeta `Services/` siempre es relativa a ese `.csproj`.
 
 Ubicaciones habituales, en orden de preferencia:
 1. `src/<NombreProyecto>/Services/` — si hay carpeta `src/`
@@ -56,7 +56,10 @@ Ubicaciones habituales, en orden de preferencia:
 3. `Services/` — si el `.csproj` está en la raíz del repositorio
 
 Una vez localizada la carpeta, comprobar qué ficheros contiene.
-Si ya existen servicios, leer su contenido antes de modificar para evitar sobreescribir cambios manuales.
+Si ya existen servicios, leer su contenido y **verificar que usan DTOs en la firma pública**:
+
+- Los métodos de la interfaz `I<Recurso>Service` deben recibir `Crear<Recurso>Dto` / `Actualizar<Recurso>Dto` y devolver `<Recurso>Dto`.
+- Si los servicios existentes reciben o devuelven entidades directamente, **sobreescribirlos** para que cumplan el contrato de DTOs. El mapeo DTO ↔ entidad siempre vive en esta capa.
 
 ### Paso 3 — Identificar los métodos del servicio
 

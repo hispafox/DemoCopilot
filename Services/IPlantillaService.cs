@@ -1,13 +1,13 @@
-using AppTodoList.Models;
+using AppTodoList.Dtos;
 
 namespace AppTodoList.Services;
 
 public interface IPlantillaService
 {
-    Task<IEnumerable<PlantillaTarea>> ObtenerTodasAsync();
-    Task<PlantillaTarea?> ObtenerPorIdAsync(int id);
-    Task<PlantillaTarea> CrearAsync(PlantillaTarea plantilla);
-    Task<PlantillaTarea?> ActualizarAsync(PlantillaTarea plantilla);
+    Task<IEnumerable<PlantillaDto>> ObtenerTodasAsync();
+    Task<PlantillaDto?> ObtenerPorIdAsync(int id);
+    Task<PlantillaDto> CrearAsync(CrearPlantillaDto dto);
+    Task<PlantillaDto?> ActualizarAsync(int id, ActualizarPlantillaDto dto);
     Task<bool> EliminarAsync(int id);
-    Task<TodoItem?> InstanciarAsync(int id);
+    Task<TareaDto?> InstanciarAsync(int id);
 }

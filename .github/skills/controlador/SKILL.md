@@ -18,7 +18,8 @@ argument-hint: 'Recurso a generar (opcional, por defecto: todos los recursos de 
 Antes de usar este skill, deben existir:
 1. `docs/analisis-diseño.md` con la sección 5 (endpoints) completa. Si no existe, ejecutar primero el skill `diseño-analisis`.
 2. Los modelos de dominio en `Models/`. Si no existen, ejecutar primero el skill `modelo`.
-3. Las interfaces e implementaciones de servicios en `Services/`. Si no existen, advertir al usuario — los controladores compilarán pero no funcionarán hasta que los servicios estén creados.
+3. Los DTOs en `Dtos/`. Si no existen, ejecutar primero el skill `dto`.
+4. Las interfaces e implementaciones de servicios en `Services/`. Si no existen, advertir al usuario — los controladores compilarán pero no funcionarán hasta que los servicios estén creados.
 
 ## Procedimiento
 
@@ -31,7 +32,14 @@ Leer los siguientes ficheros antes de generar nada:
 
 Si `docs/analisis-diseño.md` no existe, detener y pedir al usuario que primero ejecute el skill `diseño-analisis`.
 
-### Paso 2 — Localizar el proyecto y verificar qué controladores existen
+### Paso 2 — Verificar que los servicios usan DTOs
+
+Antes de generar o modificar controladores, comprobar que los servicios existentes en `Services/` usan DTOs en su firma pública:
+
+- Las interfaces `I<Recurso>Service` deben tener métodos que reciben `Crear<Recurso>Dto` / `Actualizar<Recurso>Dto` y devuelven `<Recurso>Dto`.
+- Si los servicios usan entidades directamente (p. ej. reciben `TodoItem` en lugar de `CrearTareaDto`), **no generar los controladores** — primero corregir los servicios ejecutando de nuevo el skill `servicio`.
+
+### Paso 3 — Localizar el proyecto y verificar qué controladores existen
 
 Buscar el fichero `.csproj` del proyecto principal (excluir proyectos de tests). La carpeta `Controllers/` siempre es relativa a ese `.csproj`.
 
@@ -43,7 +51,7 @@ Ubicaciones habituales, en orden de preferencia:
 Una vez localizada la carpeta, comprobar qué ficheros contiene.
 Si ya existen controladores, leer su contenido antes de modificar para evitar sobreescribir cambios manuales.
 
-### Paso 3 — Identificar los recursos de la sección 5
+### Paso 4 — Identificar los recursos de la sección 5
 
 En `docs/analisis-diseño.md`, sección 5, los endpoints están agrupados por recurso (p. ej. "Tareas — `/api/tareas`", "Plantillas — `/api/plantillas`"). Cada grupo da lugar a un controlador independiente.
 
@@ -52,11 +60,13 @@ Para cada grupo:
 - Listar todos los endpoints: verbo HTTP, ruta, descripción, respuesta OK y errores posibles
 - Identificar si hay endpoints de **acción** (rutas con un segmento adicional después del `{id}`, como `/{id}/completar` o `/{id}/instanciar`)
 
-### Paso 4 — Generar un controlador por recurso
+### Paso 5 — Generar un controlador por recurso
 
 Crear el fichero `<NombreRecursoEnPascalCase>Controller.cs` dentro de `Controllers/`.
 
 #### Estructura obligatoria de cada controlador
+
+Los controladores **siempre reciben y devuelven DTOs**, nunca entidades de dominio.
 
 ```csharp
 namespace <Namespace>.Controllers;
@@ -72,7 +82,46 @@ public class <Recurso>Controller : ControllerBase
         _servicio = servicio;
     }
 
-    // Un método por endpoint de la sección 5
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<<Recurso>Dto>>> ObtenerTodos()
+    {
+        var resultado = await _servicio.ObtenerTodosAsync();
+        return Ok(resultado);
+    }
+
+    [HttpGet("{id}")]
+    public async Task<ActionResult<<Recurso>Dto>> ObtenerPorId(int id)
+    {
+        var resultado = await _servicio.ObtenerPorIdAsync(id);
+        if (resultado is null)
+            return NotFound();
+        return Ok(resultado);
+    }
+
+    [HttpPost]
+    public async Task<ActionResult<<Recurso>Dto>> Crear(Crear<Recurso>Dto dto)
+    {
+        var creado = await _servicio.CrearAsync(dto);
+        return CreatedAtAction(nameof(ObtenerPorId), new { id = creado.Id }, creado);
+    }
+
+    [HttpPut("{id}")]
+    public async Task<ActionResult<<Recurso>Dto>> Actualizar(int id, Actualizar<Recurso>Dto dto)
+    {
+        var actualizado = await _servicio.ActualizarAsync(id, dto);
+        if (actualizado is null)
+            return NotFound();
+        return Ok(actualizado);
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<ActionResult> Eliminar(int id)
+    {
+        var eliminado = await _servicio.EliminarAsync(id);
+        if (!eliminado)
+            return NotFound();
+        return NoContent();
+    }
 }
 ```
 
@@ -136,7 +185,7 @@ public async Task<ActionResult> Completar(int id)
 
 `[ApiController]` activa automáticamente la validación del `ModelState`. Solo añadir `if (!ModelState.IsValid) return BadRequest(ModelState);` si la validación automática no es suficiente (caso poco habitual con `[ApiController]`).
 
-### Paso 5 — Comprobar y actualizar `Program.cs`
+### Paso 6 — Comprobar y actualizar `Program.cs`
 
 Abrir `Program.cs` y verificar:
 
@@ -150,7 +199,7 @@ Abrir `Program.cs` y verificar:
 
 Colocar los registros de servicios agrupados antes de `var app = builder.Build();`.
 
-### Paso 6 — Confirmar
+### Paso 7 — Confirmar
 
 Informar al usuario con una lista de los ficheros creados o modificados con sus rutas relativas.
 

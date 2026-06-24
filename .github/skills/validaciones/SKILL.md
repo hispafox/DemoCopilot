@@ -21,7 +21,7 @@ Antes de usar este skill, deben existir:
 
 ## Procedimiento
 
-### Paso 1 — Leer el contexto
+### Paso 1 — Leer el contexto y verificar que se usan DTOs
 
 Leer los siguientes ficheros antes de generar nada:
 
@@ -29,6 +29,9 @@ Leer los siguientes ficheros antes de generar nada:
 - [`.github/copilot-instructions.md`](../copilot-instructions.md) — convenciones de código del proyecto
 - Los DTOs en `Dtos/` — para saber qué campos validar
 - Las implementaciones en `LogicaNegocio/` — para saber dónde añadir la lógica de validación
+- Los servicios en `Services/` y los controladores en `Controllers/` — para verificar que usan DTOs
+
+**Verificación obligatoria antes de continuar**: comprobar que los servicios reciben/devuelven DTOs y que los controladores usan DTOs en sus firmas. Si no es así, detener y ejecutar primero el skill `servicio` y `controlador` para corregirlo — añadir anotaciones de validación sobre entidades directamente no tiene efecto en el pipeline de ASP.NET Core.
 
 ### Paso 2 — Añadir anotaciones de validación a los DTOs de entrada
 
