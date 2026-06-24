@@ -147,24 +147,32 @@ using (var scope = app.Services.CreateScope())
 }
 ```
 
-### Paso 7 — Indicar los comandos de migración
+### Paso 7 — Ejecutar las migraciones
 
-**No ejecutar las migraciones automáticamente.** Indicar al usuario los comandos exactos:
+**Ejecutar siempre las migraciones automáticamente** usando el terminal.
+
+Primero, determinar el nombre de la migración:
+- Si es la primera migración del proyecto: usar `CreacionInicial`.
+- Si ya existen migraciones: usar un nombre descriptivo del cambio (p. ej. `AnadirCampoFecha`).
+
+Ejecutar en orden:
 
 ```bash
-dotnet ef migrations add CreacionInicial
+dotnet ef migrations add <NombreMigracion>
 dotnet ef database update
 ```
 
-Si EF Core Tools no está instalado:
+Si EF Core Tools no está instalado, instalarlo primero:
 ```bash
 dotnet tool install --global dotnet-ef
 ```
 
-Si el proyecto no tiene la referencia al paquete de diseño, indicar que hay que añadirla:
+Si el proyecto no tiene la referencia al paquete de diseño, añadirla primero:
 ```bash
 dotnet add package Microsoft.EntityFrameworkCore.Design
 ```
+
+Tras ejecutar las migraciones, incluir los ficheros generados en `Migrations/` en el commit.
 
 ### Paso 8 — Confirmar
 
