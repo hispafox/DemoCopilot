@@ -8,6 +8,7 @@ Este documento describe el conjunto de skills disponibles en el proyecto, su pro
 
 | Skill | Carpeta generada | Responsabilidad |
 |---|---|---|
+| `nueva-feature` | _todas_ | **Orquestador principal.** Implementa cualquier feature nueva de principio a fin. Invoca el resto de skills en orden. |
 | `diseño-analisis` | `docs/` | Documento de análisis y diseño — fuente de verdad de todo lo demás |
 | `modelo` | `Models/` | Entidades de dominio (clases C#) |
 | `dto` | `Dtos/` | Contratos de entrada y salida de la API |
@@ -22,11 +23,11 @@ Este documento describe el conjunto de skills disponibles en el proyecto, su pro
 
 ## 2. Flujo de ejecución — orden obligatorio
 
-Los skills tienen dependencias estrictas. El diagrama muestra el orden en que deben ejecutarse y qué artefacto produce cada uno:
+Usa el skill `nueva-feature` para ejecutar todo el proceso de una vez. Internamente invoca los skills individuales en este orden:
 
 ```mermaid
 flowchart TD
-    A([Inicio]) --> DA
+    NF(["🚀 nueva-feature\nPetición de feature"])
 
     DA["🔍 diseño-analisis\ndocs/analisis-diseño.md"]
     M["📦 modelo\nModels/*.cs"]
@@ -38,6 +39,7 @@ flowchart TD
     CT["🌐 controlador\nControllers/*Controller.cs"]
     CM["✅ commit-message\nMensaje de commit"]
 
+    NF --> DA
     DA --> M
     M --> DTO
     DTO --> BD
@@ -47,6 +49,7 @@ flowchart TD
     SV --> CT
     CT --> CM
 
+    style NF fill:#fdf4ff,stroke:#a21caf,stroke-width:2px
     style DA fill:#dbeafe,stroke:#3b82f6
     style M  fill:#dcfce7,stroke:#16a34a
     style DTO fill:#fef9c3,stroke:#ca8a04
@@ -227,9 +230,19 @@ flowchart TD
 
 ## 7. Cuándo usar cada skill
 
+Para la mayoría de los casos, usar directamente `nueva-feature` — detecta automáticamente qué capas necesitan cambios y ejecuta solo los pasos necesarios.
+
+Usa los skills individuales solo cuando necesites actuar sobre una única capa de forma aislada (p. ej. ajustar solo un DTO sin tocar nada más).
+
 ```mermaid
 flowchart TD
-    START([Nueva feature / nuevo recurso]) --> Q1{¿Existe\ndocs/analisis-diseño.md?}
+    START([Nueva feature / nuevo recurso]) --> Q0{¿Afecta
+a varias capas?}
+    Q0 -->|Sí| NF["▶ Usar
+nueva-feature"]
+    Q0 -->|No| Q1{¿Existe\ndocs/analisis-diseño.md?}
+    NF --> END2([Listo])
+    style NF fill:#fdf4ff,stroke:#a21caf,stroke-width:2px
 
     Q1 -->|No| DA["▶ Ejecutar\ndiseño-analisis"]
     Q1 -->|Sí| Q2{¿Existen\nlos modelos?}

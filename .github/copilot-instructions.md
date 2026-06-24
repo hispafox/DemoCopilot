@@ -62,6 +62,21 @@ dotnet ef migrations add <Nombre>
 dotnet ef database update
 ```
 
+## Skills disponibles
+
+| Skill | Cuándo usarlo |
+|---|---|
+| `nueva-feature` | **Orquestador principal.** Implementa cualquier feature nueva de principio a fin (entidad nueva, campo nuevo, endpoint nuevo). Ejecuta todos los skills necesarios en orden. |
+| `diseño-analisis` | Crear o regenerar `docs/analisis-diseño.md` |
+| `modelo` | Crear o actualizar entidades en `Models/` |
+| `dto` | Crear o actualizar DTOs en `Dtos/` |
+| `base-de-datos` | Configurar `AppDbContext`, Fluent API y migraciones |
+| `logica-negocio` | Crear o actualizar `LogicaNegocio/` |
+| `validaciones` | Añadir validaciones a DTOs y lógica |
+| `servicio` | Crear o actualizar `Services/` |
+| `controlador` | Crear o actualizar `Controllers/` |
+| `commit-message` | Generar el mensaje de commit |
+
 ## Reglas para la demo
 
 - **Cada feature nueva lleva su test** — no crear issues separados para tests.
