@@ -76,6 +76,7 @@ dotnet ef database update
 | `servicio` | Crear o actualizar `Services/` |
 | `controlador` | Crear o actualizar `Controllers/` |
 | `commit-message` | Generar el mensaje de commit |
+| `estimacion-proyecto` | Generar `docs/insights-proyecto.xlsx` con estimaciones de esfuerzo, comparativa con/sin Copilot, modelo de datos y endpoints |
 
 ## Reglas para la demo
 

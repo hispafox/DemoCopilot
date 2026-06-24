@@ -199,9 +199,77 @@ Abrir `Program.cs` y verificar:
 
 Colocar los registros de servicios agrupados antes de `var app = builder.Build();`.
 
-### Paso 7 — Confirmar
+### Paso 7 — Actualizar el fichero `.http`
+
+Localizar el fichero `.http` en la raíz del proyecto (normalmente `<NombreProyecto>.http`). Si no existe, crearlo.
+
+Reescribir su contenido completo con **todas** las peticiones de **todos** los controladores del proyecto (no solo los recién creados). Usar el siguiente formato:
+
+```http
+@<NombreProyecto>_HostAddress = http://localhost:5104
+
+### ===========================
+### <RECURSO EN MAYÚSCULAS>  /api/<recurso>
+### ===========================
+
+### Listar todos
+GET {{<NombreProyecto>_HostAddress}}/api/<recurso>
+Accept: application/json
+
+###
+
+### Obtener por ID
+GET {{<NombreProyecto>_HostAddress}}/api/<recurso>/1
+Accept: application/json
+
+###
+
+### Crear
+POST {{<NombreProyecto>_HostAddress}}/api/<recurso>
+Content-Type: application/json
+
+{
+  <campos del Crear<Recurso>Dto con valores de ejemplo>
+}
+
+###
+
+### Actualizar
+PUT {{<NombreProyecto>_HostAddress}}/api/<recurso>/1
+Content-Type: application/json
+
+{
+  <campos del Actualizar<Recurso>Dto con valores de ejemplo>
+}
+
+###
+
+### Eliminar
+DELETE {{<NombreProyecto>_HostAddress}}/api/<recurso>/1
+
+###
+
+### <Acción especial, si existe>
+POST {{<NombreProyecto>_HostAddress}}/api/<recurso>/1/<accion>
+
+###
+```
+
+**Reglas:**
+
+- El puerto en `@<NombreProyecto>_HostAddress` debe coincidir con el valor ya existente en el `.http` (o con `Properties/launchSettings.json` si se crea desde cero).
+- Incluir un bloque por cada endpoint de cada controlador, en el mismo orden en que aparecen en el código.
+- Los cuerpos JSON de POST/PUT deben usar valores de ejemplo realistas (no `"string"` ni `null` para campos obligatorios).
+- Los campos opcionales (`null`) se pueden incluir o excluir — preferir incluirlos comentados para que sirvan de referencia.
+- Separar grupos de endpoints con un comentario de sección `### === ... ===`.
+
+### Paso 8 — Confirmar
 
 Informar al usuario con una lista de los ficheros creados o modificados con sus rutas relativas.
+
+Si algún servicio referenciado no existe aún, listarlos explícitamente indicando que los controladores compilarán con errores hasta que se creen. Sugerir ejecutar el skill correspondiente (p. ej. `servicio`) como siguiente paso.
+
+Si los controladores ya existían y se han modificado, señalar qué cambios se han hecho para que el usuario pueda revisarlos.
 
 Si algún servicio referenciado no existe aún, listarlos explícitamente indicando que los controladores compilarán con errores hasta que se creen. Sugerir ejecutar el skill correspondiente (p. ej. `servicio`) como siguiente paso.
 
