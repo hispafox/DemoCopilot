@@ -1,6 +1,20 @@
+using AppTodoList.Data;
+using AppTodoList.LogicaNegocio;
+using AppTodoList.Services;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddScoped<ITodoLogica, TodoLogica>();
+builder.Services.AddScoped<IPlantillaLogica, PlantillaLogica>();
+
+builder.Services.AddScoped<ITodoService, TodoService>();
+builder.Services.AddScoped<IPlantillaService, PlantillaService>();
 
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
