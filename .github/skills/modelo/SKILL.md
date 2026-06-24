@@ -1,6 +1,6 @@
 ---
 name: modelo
-description: 'Crea o actualiza los modelos de dominio de la aplicación y los elementos relacionados (DTOs, ViewModels, DbContext, migraciones). Úsalo cuando quieras generar o regenerar las entidades del proyecto (TodoItem, PlantillaTarea, TipoRecurrencia), actualizar campos del modelo, o sincronizar el código con el documento de análisis y diseño.'
+description: 'Crea o actualiza los modelos de dominio de la aplicación y los elementos relacionados (DTOs, ViewModels, DbContext, migraciones). Úsalo cuando quieras generar o regenerar las entidades del proyecto, actualizar campos del modelo, o sincronizar el código con el documento de análisis y diseño.'
 argument-hint: 'Modelo a crear o actualizar (opcional, por defecto: todos los modelos del análisis)'
 ---
 
