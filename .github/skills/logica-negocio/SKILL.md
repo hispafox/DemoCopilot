@@ -18,7 +18,7 @@ argument-hint: 'Recurso a generar (opcional, por defecto: todos los recursos de 
 Antes de usar este skill, deben existir:
 1. `docs/analisis-diseño.md` con la sección 4 y 5 completas. Si no existe, ejecutar primero el skill `diseño-analisis`.
 2. Los modelos de dominio en `Models/`. Si no existen, ejecutar primero el skill `modelo`.
-3. `Data/AppDbContext.cs` con los `DbSet<T>` de cada entidad. Si no existe, generar la implementación con `// TODO: inyectar AppDbContext` y advertir al usuario.
+3. `Data/AppDbContext.cs` con los `DbSet<T>` de cada entidad. Si no existe, ejecutar primero el skill `base-de-datos`.
 
 ## Procedimiento
 

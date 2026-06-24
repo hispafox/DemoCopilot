@@ -5,7 +5,7 @@ Pasos a seguir para crear la aplicacion:
 
 Analisis / Arquitectura
 -----------------------
-1-Diseño/Analisis completo de la aplicacion
+1-Diseño/Analisis completo de la aplicacion  → skill `diseño-analisis`
 
 
 Elementos basicos
@@ -19,14 +19,14 @@ Elementos basicos
 
 Comprobar que los datos sean correctos
 --------------------------------------
-1-Añadir validaciones
-2-Comprobar la existencia de un identificador (de tarea por ejemplo)
+1-Añadir validaciones                              → skill `validaciones`
+2-Comprobar la existencia de un identificador      → incluido en el skill `validaciones` (Paso 3)
 
 Conectar con base de datos
 --------------------------
-1-Crear contexto de base de datos (dbcontext)
-2-Crear entidades a partir del modelo
-2-Consultas ( filtros )
-3-Crear datos de ejemplo
+1-Crear contexto de base de datos (dbcontext)  → skill `base-de-datos`
+2-Crear entidades a partir del modelo          → incluido en el skill `base-de-datos` (Paso 7 — migraciones)
+3-Consultas ( filtros )                        → incluido en el skill `logica-negocio`
+4-Crear datos de ejemplo                       → incluido en el skill `base-de-datos` (Paso 6 — seeder)
 
 
