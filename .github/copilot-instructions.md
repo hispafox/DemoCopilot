@@ -11,15 +11,22 @@ Demo didáctica para curso de GitHub Copilot. Aplicación CRUD de lista de tarea
 
 ## Arquitectura
 
-Estructura de capas simple, apropiada para una demo:
+Estructura de capas del proyecto:
 
 ```
 DemoCopilot/
 ├── Models/          # Entidades de dominio (TodoItem, etc.)
+├── Dtos/            # Contratos de entrada/salida de la API
 ├── Data/            # DbContext y configuración de EF Core
-├── Services/        # Lógica de negocio (ITodoService, TodoService)
+├── LogicaNegocio/   # Reglas de negocio y acceso a datos (IXxxLogica, XxxLogica)
+├── Services/        # Orquestación y mapeo DTO ↔ entidad (IXxxService, XxxService)
 ├── Controllers/     # Endpoints HTTP
 └── Tests/           # Proyecto xUnit separado
+```
+
+Flujo de llamadas:
+```
+Controller → [DTO] → Service → [Entidad] → LogicaNegocio → DbContext
 ```
 
 - No usar patrones complejos (CQRS, mediator) — el objetivo es claridad didáctica.

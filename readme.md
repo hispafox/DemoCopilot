@@ -10,11 +10,12 @@ Analisis / Arquitectura
 
 Elementos basicos
 -----------------
-1-Crear modelo
-2-Crear el controlador
-3-Crear la vista del controlador
-4-Crear los viewmodels
-5-crear los dtos
+1-Crear modelo         → skill `modelo`
+2-Crear el controlador → skill `controlador`
+3-crear los dtos       → skill `dto`
+4-Crear los servicios  → skill `servicio`
+5-Inyectar servicios   → incluido en el skill `servicio` (Paso 5)
+6-Crear logica negocio → skill `logica-negocio`
 
 Comprobar que los datos sean correctos
 --------------------------------------
