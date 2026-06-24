@@ -75,6 +75,7 @@ DemoCopilot/
 | `Recurrencia` | `TipoRecurrencia?` | Periodicidad: `Diaria`, `Semanal` o `Mensual`. `null` si no es repetitiva |
 | `ProximaFecha` | `DateTime?` | Fecha calculada para la siguiente ocurrencia. `null` si no es repetitiva |
 | `PlantillaId` | `int?` | FK opcional a `PlantillaTarea` si la tarea se originó de una plantilla |
+| `UsuarioAsignadoId` | `int?` | FK opcional a `UsuarioAsignado`. `null` si la tarea no tiene usuario asignado |
 
 ```csharp
 public class TodoItem
@@ -88,8 +89,33 @@ public class TodoItem
     public DateTime? ProximaFecha { get; set; }
     public int? PlantillaId { get; set; }
     public PlantillaTarea? Plantilla { get; set; }
+    public int? UsuarioAsignadoId { get; set; }
+    public UsuarioAsignado? UsuarioAsignado { get; set; }
 }
 ```
+
+---
+
+### `UsuarioAsignado`
+
+Usuario que puede ser asignado a una o varias tareas.
+
+| Campo | Tipo | Descripción |
+|---|---|---|
+| `Id` | `int` | Clave primaria, autogenerada |
+| `Nombre` | `string` | Nombre completo del usuario. Requerido, máx. 100 caracteres |
+| `Email` | `string` | Dirección de correo electrónico. Requerido, único, máx. 200 caracteres |
+
+```csharp
+public class UsuarioAsignado
+{
+    public int Id { get; set; }
+    public string Nombre { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+}
+```
+
+Relación: un `UsuarioAsignado` puede tener muchas tareas (`TodoItem`). La FK en `TodoItem` es opcional (`SetNull` al eliminar el usuario).
 
 ---
 
@@ -142,6 +168,16 @@ public enum TipoRecurrencia
 | DELETE | `/api/tareas/{id}` | Eliminar una tarea | `204 No Content` | `404` si no existe |
 | POST | `/api/tareas/{id}/completar` | Marcar como completada; si es repetitiva, genera la siguiente ocurrencia automáticamente | `200` + `TodoItem` (o nueva ocurrencia) | `404` si no existe |
 
+### Usuarios asignados — `/api/usuariosasignados`
+
+| Verbo | Ruta | Descripción | Respuesta OK | Error |
+|---|---|---|---|---|
+| GET | `/api/usuariosasignados` | Listar todos los usuarios | `200` + array de `UsuarioAsignado` | — |
+| GET | `/api/usuariosasignados/{id}` | Obtener un usuario por ID | `200` + `UsuarioAsignado` | `404` si no existe |
+| POST | `/api/usuariosasignados` | Crear un usuario nuevo | `201` + `UsuarioAsignado` creado | `400` si datos inválidos |
+| PUT | `/api/usuariosasignados/{id}` | Actualizar nombre o email | `200` + `UsuarioAsignado` actualizado | `404` / `400` |
+| DELETE | `/api/usuariosasignados/{id}` | Eliminar un usuario (las tareas asociadas quedan sin usuario asignado) | `204 No Content` | `404` si no existe |
+
 ### Plantillas — `/api/plantillas`
 
 | Verbo | Ruta | Descripción | Respuesta OK | Error |
@@ -155,7 +191,19 @@ public enum TipoRecurrencia
 
 ---
 
-## 6. Decisiones de diseño
+## 6. Datos de ejemplo
+
+Cada vez que se añade una entidad nueva, se actualizan los datos de ejemplo en `Data/DatosEjemplo.cs` con al menos 2-3 registros representativos. El seeder se invoca desde `Program.cs` al arrancar la aplicación y solo inserta datos si la tabla está vacía.
+
+| Entidad | Registros de ejemplo |
+|---|---|
+| `UsuarioAsignado` | Ana García (ana@demo.com), Carlos López (carlos@demo.com) |
+| `PlantillaTarea` | "Revisión semanal" (semanal), "Backup diario" (diaria) |
+| `TodoItem` | "Configurar entorno" (completada), "Revisar PR pendientes" (repetitiva semanal, asignada a Ana) |
+
+---
+
+## 7. Decisiones de diseño
 
 - **SQLite sobre SQL Server**: base de datos embebida, sin instalación ni configuración de servidor. Ideal para una demo local y didáctica.
 - **Controllers sobre Minimal API**: los controladores con atributos son más explícitos y fáciles de leer en pantalla durante una presentación.

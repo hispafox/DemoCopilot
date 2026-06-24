@@ -9,6 +9,7 @@ public class CrearTareaDto
     public bool EsRepetitiva { get; set; } = false;
     public TipoRecurrencia? Recurrencia { get; set; }
     public int? PlantillaId { get; set; }
+    public int? UsuarioAsignadoId { get; set; }
 }
 
 // DTO de entrada para actualizar una tarea
@@ -18,6 +19,7 @@ public class ActualizarTareaDto
     public bool IsCompleted { get; set; } = false;
     public bool EsRepetitiva { get; set; } = false;
     public TipoRecurrencia? Recurrencia { get; set; }
+    public int? UsuarioAsignadoId { get; set; }
 }
 
 // DTO de salida (respuesta)
@@ -31,4 +33,6 @@ public class TareaDto
     public TipoRecurrencia? Recurrencia { get; set; }
     public DateTime? ProximaFecha { get; set; }
     public int? PlantillaId { get; set; }
+    public int? UsuarioAsignadoId { get; set; }
+    public string? UsuarioAsignadoNombre { get; set; }
 }

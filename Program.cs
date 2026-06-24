@@ -15,12 +15,20 @@ builder.Services.AddScoped<IPlantillaLogica, PlantillaLogica>();
 
 builder.Services.AddScoped<ITodoService, TodoService>();
 builder.Services.AddScoped<IPlantillaService, PlantillaService>();
+builder.Services.AddScoped<IUsuarioAsignadoService, UsuarioAsignadoService>();
 
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var contexto = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    contexto.Database.EnsureCreated();
+    DatosEjemplo.Inicializar(contexto);
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
