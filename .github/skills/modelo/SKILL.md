@@ -55,28 +55,11 @@ Crear la carpeta `Models/` si no existe. Generar o actualizar **cada entidad** d
 - **Sin lógica de negocio** en las entidades: solo propiedades, sin métodos.
 - **Enums** en fichero propio dentro de `Models/`.
 
-#### Entidades a generar (según el análisis actual)
+#### Entidades a generar
 
-**`Models/TipoRecurrencia.cs`** — enum con los valores: `Diaria`, `Semanal`, `Mensual`.
+Extraer la lista completa de entidades y sus campos de la **sección 4 del análisis** (`docs/analisis-diseño.md`). Esa sección es la única fuente de verdad — no inferir ni añadir campos que no estén definidos ahí.
 
-**`Models/PlantillaTarea.cs`** — campos:
-- `Id` (`int`)
-- `Titulo` (`string`)
-- `EsRepetitiva` (`bool`)
-- `Recurrencia` (`TipoRecurrencia?`)
-
-**`Models/TodoItem.cs`** — campos:
-- `Id` (`int`)
-- `Title` (`string`)
-- `IsCompleted` (`bool`)
-- `CreatedAt` (`DateTime`)
-- `EsRepetitiva` (`bool`)
-- `Recurrencia` (`TipoRecurrencia?`)
-- `ProximaFecha` (`DateTime?`)
-- `PlantillaId` (`int?`)
-- `Plantilla` (`PlantillaTarea?`) — propiedad de navegación
-
-El orden de generación debe ser: primero `TipoRecurrencia`, luego `PlantillaTarea`, por último `TodoItem` (por dependencias).
+Respetar el orden de generación según dependencias: los enums primero, luego las entidades sin FK, por último las entidades que referencian a otras.
 
 ### Paso 4 — Propagar cambios a elementos relacionados (solo si ya existen)
 
