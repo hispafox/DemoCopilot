@@ -78,6 +78,15 @@ dotnet ef database update
 | `commit-message` | Generar el mensaje de commit |
 | `estimacion-proyecto` | Generar `docs/insights-proyecto.xlsx` con estimaciones de esfuerzo, comparativa con/sin Copilot, modelo de datos y endpoints |
 
+## Agentes disponibles
+
+| Agente | Cuándo usarlo |
+|---|---|
+| `@planificador-democopilot` | Planificar una feature nueva, generar `docs/plan-*.md` |
+| `@desarrollador-democopilot` | Implementar un plan de `docs/plan-*.md` capa a capa |
+| `@verificador-democopilot` | Verificar que la implementación de un plan es correcta |
+| `@auditor-calidad` | **Auditoría completa de calidad:** code smells, deuda técnica, SOLID, seguridad, convenciones. Modo abogado del diablo. |
+
 ## Reglas para la demo
 
 - **Cada feature nueva lleva su test** — no crear issues separados para tests.
