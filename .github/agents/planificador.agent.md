@@ -29,6 +29,7 @@ Eres el agente planificador de DemoCopilot. Tu único cometido es analizar la pe
 Lee los ficheros clave para entender qué existe:
 
 - `docs/analisis-diseño.md` — arquitectura y modelo de datos actuales
+- `docs/skills-orquestacion.md` — catálogo de skills disponibles y su orden de ejecución
 - `Models/` — entidades de dominio
 - `Dtos/` — contratos de entrada/salida
 - `Data/AppDbContext.cs` — DbContext y relaciones
@@ -47,6 +48,7 @@ Identifica:
 - Qué endpoints expone la feature (verbo HTTP, ruta, cuerpo, respuesta)
 - Qué capas se ven afectadas
 - Qué tests unitarios cubren la lógica nueva
+- Qué skills del catálogo hay que invocar y en qué orden (según `docs/skills-orquestacion.md`)
 
 ### 3. Generar el documento de planificación
 
@@ -130,6 +132,29 @@ Lista de casos de test que cubren la lógica nueva:
 ## 9. Criterios de aceptación
 
 Lista de verificaciones que confirman que la feature está terminada y correcta.
+
+## 10. Skills a invocar
+
+Basándote en las capas afectadas (sección 7), indica qué skills del catálogo de
+`docs/skills-orquestacion.md` hay que ejecutar para implementar esta feature y en qué orden.
+Respeta siempre la cadena de dependencias definida en ese documento.
+
+> Para ejecutar toda la cadena de una vez, usa el skill orquestador: `nueva-feature`.
+> Para ejecutar skills individuales, llámalos en el orden indicado a continuación.
+
+| Orden | Skill | Motivo (qué genera para esta feature) |
+|-------|-------|---------------------------------------|
+| 1 | `diseño-analisis` | Solo si hay cambios en el modelo de datos o en los endpoints |
+| 2 | `modelo` | Si hay entidades nuevas o campos nuevos |
+| 3 | `dto` | Si hay DTOs nuevos o modificados |
+| 4 | `base-de-datos` | Si hay cambios en AppDbContext o se necesita migración |
+| 5 | `logica-negocio` | Si hay reglas de negocio o acceso a datos nuevos |
+| 6 | `validaciones` | Si hay validaciones en DTOs o reglas de dominio |
+| 7 | `servicio` | Si hay métodos de servicio nuevos o modificados |
+| 8 | `controlador` | Si hay endpoints nuevos o modificados |
+| 9 | `commit-message` | Siempre, al finalizar la implementación |
+
+> Marca con **N/A** los skills que no apliquen a esta feature concreta y explica brevemente por qué.
 ```
 
 ---
