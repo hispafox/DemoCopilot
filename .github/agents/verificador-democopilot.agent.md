@@ -177,6 +177,16 @@ Verifica que todas las interfaces están registradas con `AddScoped`:
 
 Si falta algún registro, reporta: **REVISAR — Falta registrar `I<Recurso>Logica` en `Program.cs`.**
 
+#### 4.7. Frontend (`frontend/`) — solo si existe la carpeta
+
+Si el plan indica cambios en el frontend (skill `frontend-react`), verifica:
+
+- **`frontend/src/types/index.ts`**: los campos nuevos del DTO de salida tienen su equivalente TypeScript con el tipo correcto (ver mapeo en el skill `frontend-react`).
+- **`frontend/src/services/<recurso>.service.ts`**: existe y exporta funciones para todos los endpoints nuevos del plan.
+- **Páginas/componentes**: si es un recurso nuevo, existe al menos una página en `frontend/src/pages/`.
+
+Si `frontend/` no existe, omitir este apartado sin penalización.
+
 ### 5. Verificar tests unitarios
 
 Si el plan incluye la sección 8 ("Tests unitarios a implementar"), verifica que los tests existen y cubren los casos especificados.

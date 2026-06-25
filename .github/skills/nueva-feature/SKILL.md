@@ -143,7 +143,19 @@ Ejecutar el skill [`controlador`](../controlador/SKILL.md):
 
 ---
 
-### Paso 9 — Compilar y verificar
+### Paso 9 — Frontend (si existe `frontend/`)
+
+Si la carpeta `frontend/` existe en el proyecto, ejecutar el skill [`frontend-react`](../frontend-react/SKILL.md) para:
+
+- Actualizar los tipos TypeScript en `frontend/src/types/index.ts` con los campos nuevos del DTO de salida.
+- Actualizar (o crear) el servicio fetch en `frontend/src/services/<recurso>.service.ts` si hay endpoints nuevos.
+- Actualizar (o crear) la página y componentes si es una entidad nueva.
+
+Si `frontend/` no existe, saltar este paso.
+
+---
+
+### Paso 10 — Compilar y verificar
 
 ```bash
 dotnet build

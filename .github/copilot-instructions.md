@@ -75,6 +75,7 @@ dotnet ef database update
 | `validaciones` | Añadir validaciones a DTOs y lógica |
 | `servicio` | Crear o actualizar `Services/` |
 | `controlador` | Crear o actualizar `Controllers/` |
+| `frontend-react` | Crear o actualizar el frontend React + Vite + TypeScript en `frontend/` |
 | `commit-message` | Generar el mensaje de commit |
 | `estimacion-proyecto` | Generar `docs/insights-proyecto.xlsx` con estimaciones de esfuerzo, comparativa con/sin Copilot, modelo de datos y endpoints |
 

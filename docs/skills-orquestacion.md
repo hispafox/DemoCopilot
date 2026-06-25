@@ -17,6 +17,7 @@ Este documento describe el conjunto de skills disponibles en el proyecto, su pro
 | `validaciones` | `Dtos/` + `LogicaNegocio/` | Anotaciones de validación y reglas de dominio |
 | `servicio` | `Services/` | Orquestación: mapeo DTO ↔ entidad, delegación a lógica |
 | `controlador` | `Controllers/` | Capa HTTP: recibe peticiones, llama al servicio, devuelve respuesta |
+| `frontend-react` | `frontend/` | Frontend React + Vite + TypeScript: tipos, servicios fetch, páginas y componentes |
 | `commit-message` | — | Genera el mensaje de commit siguiendo convenciones del proyecto |
 
 ---
@@ -37,6 +38,7 @@ flowchart TD
     VA["✔️ validaciones\nDtos/ + LogicaNegocio/"]
     SV["🔀 servicio\nServices/I*Service.cs\nServices/*Service.cs"]
     CT["🌐 controlador\nControllers/*Controller.cs"]
+    FR["⚛️ frontend-react\nfrontend/src/types/\nfrontend/src/services/\nfrontend/src/pages/"]
     CM["✅ commit-message\nMensaje de commit"]
 
     NF --> DA
@@ -47,7 +49,8 @@ flowchart TD
     LN --> VA
     VA --> SV
     SV --> CT
-    CT --> CM
+    CT --> FR
+    FR --> CM
 
     style NF fill:#fdf4ff,stroke:#a21caf,stroke-width:2px
     style DA fill:#dbeafe,stroke:#3b82f6
@@ -58,6 +61,7 @@ flowchart TD
     style VA fill:#fef3c7,stroke:#d97706
     style SV fill:#ede9fe,stroke:#7c3aed
     style CT fill:#ffedd5,stroke:#ea580c
+    style FR fill:#fdf4ff,stroke:#7c3aed
     style CM fill:#f1f5f9,stroke:#64748b
 ```
 
@@ -96,6 +100,8 @@ graph LR
     LN -->|"validación de existencia"| LN
     LN -->|"interfaz I*Logica"| SV
     SV -->|"interfaz I*Service"| CT
+    DT -->|"tipos TypeScript"| FR["frontend/src/types/"]
+    CT -->|"endpoints consumidos"| FR
 
     DB -->|"AddDbContext"| PR
     DB -->|"ConnectionStrings"| AP

@@ -36,6 +36,8 @@ Lee los ficheros clave para entender qué existe:
 - `LogicaNegocio/` — interfaces e implementaciones de lógica
 - `Services/` — interfaces e implementaciones de servicios
 - `Controllers/` — endpoints actuales
+- `frontend/src/types/index.ts` (si existe) — tipos TypeScript actuales del frontend
+- `frontend/src/services/` (si existe) — servicios fetch actuales del frontend
 
 ### 2. Analizar la petición
 
@@ -48,7 +50,8 @@ Identifica:
 - Qué endpoints expone la feature (verbo HTTP, ruta, cuerpo, respuesta)
 - Qué capas se ven afectadas
 - Qué tests unitarios cubren la lógica nueva
-- Qué skills del catálogo hay que invocar y en qué orden (según `docs/skills-orquestacion.md`)
+- Si el frontend (`frontend/`) existe: qué tipos TypeScript y servicios fetch hay que actualizar o crear
+- Qué skills del catálogo hay que invocar y en qué orden (según `docs/skills-orquestacion.md`), incluyendo `frontend-react` si procede
 
 ### 3. Generar el documento de planificación
 
