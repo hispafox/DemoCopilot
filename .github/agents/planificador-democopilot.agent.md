@@ -4,8 +4,8 @@ description: >
   una nueva funcionalidad, analizar una petición, generar un plan de implementación, crear
   el documento de planificación, diseñar una feature, desglosar una tarea en pasos o
   entender qué capas afecta un cambio antes de escribir código.
-name: planificador
-tools: [read, search]
+name: planificador-democopilot
+tools: [read, search, edit]
 model: Claude Sonnet 4.5 (copilot)
 argument-hint: "Describe la feature o cambio que quieres planificar"
 user-invocable: true
