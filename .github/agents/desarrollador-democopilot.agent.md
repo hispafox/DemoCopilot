@@ -112,6 +112,7 @@ Los skills están en `.github/skills/`. Los más comunes:
 - **validaciones**: Añade validaciones a DTOs y lógica
 - **servicio**: Crea/modifica `Services/`
 - **controlador**: Crea/modifica `Controllers/`
+- **ui-ux-pro-max**: **CONSULTAR ANTES DE FRONTEND** — Valida patrones de diseño UI/UX, heurísticas de usabilidad, accesibilidad y experiencia antes de escribir código React
 - **frontend-react**: Crea/modifica `frontend/` (tipos TypeScript, servicios fetch, páginas y componentes)
 - **commit-message**: Genera mensaje de commit
 

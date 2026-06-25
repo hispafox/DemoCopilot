@@ -17,6 +17,7 @@ Este documento describe el conjunto de skills disponibles en el proyecto, su pro
 | `validaciones` | `Dtos/` + `LogicaNegocio/` | Anotaciones de validación y reglas de dominio |
 | `servicio` | `Services/` | Orquestación: mapeo DTO ↔ entidad, delegación a lógica |
 | `controlador` | `Controllers/` | Capa HTTP: recibe peticiones, llama al servicio, devuelve respuesta |
+| `ui-ux-pro-max` | — | **VALORAR ANTES DE FRONTEND.** Catálogo de patrones UI/UX, heurísticas de usabilidad, accesibilidad y mejores prácticas para validar diseño antes de escribir código React |
 | `frontend-react` | `frontend/` | Frontend React + Vite + TypeScript: tipos, servicios fetch, páginas y componentes |
 | `commit-message` | — | Genera el mensaje de commit siguiendo convenciones del proyecto |
 
@@ -49,8 +50,11 @@ flowchart TD
     LN --> VA
     VA --> SV
     SV --> CT
-    CT --> FR
+    CT --> UX
+    UX --> FR
     FR --> CM
+
+    UX["🎭 ui-ux-pro-max\nValidación de patrones UI/UX\ny mejores prácticas"]
 
     style NF fill:#fdf4ff,stroke:#a21caf,stroke-width:2px
     style DA fill:#dbeafe,stroke:#3b82f6
@@ -61,6 +65,7 @@ flowchart TD
     style VA fill:#fef3c7,stroke:#d97706
     style SV fill:#ede9fe,stroke:#7c3aed
     style CT fill:#ffedd5,stroke:#ea580c
+    style UX fill:#fef3c7,stroke:#f59e0b
     style FR fill:#fdf4ff,stroke:#7c3aed
     style CM fill:#f1f5f9,stroke:#64748b
 ```

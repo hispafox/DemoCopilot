@@ -51,7 +51,8 @@ Identifica:
 - Qué capas se ven afectadas
 - Qué tests unitarios cubren la lógica nueva
 - Si el frontend (`frontend/`) existe: qué tipos TypeScript y servicios fetch hay que actualizar o crear
-- Qué skills del catálogo hay que invocar y en qué orden (según `docs/skills-orquestacion.md`), incluyendo `frontend-react` si procede
+- **Si la feature afecta al frontend:** incluir el skill `ui-ux-pro-max` ANTES de `frontend-react` en la tabla de skills (sección 10) para validar patrones UI/UX, heurísticas de usabilidad, accesibilidad y experiencia de usuario antes de implementar componentes
+- Qué skills del catálogo hay que invocar y en qué orden (según `docs/skills-orquestacion.md`), incluyendo `ui-ux-pro-max` → `frontend-react` si procede
 
 ### 3. Generar el documento de planificación
 

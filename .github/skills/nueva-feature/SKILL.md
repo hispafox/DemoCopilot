@@ -145,11 +145,27 @@ Ejecutar el skill [`controlador`](../controlador/SKILL.md):
 
 ### Paso 9 — Frontend (si existe `frontend/`)
 
-Si la carpeta `frontend/` existe en el proyecto, ejecutar el skill [`frontend-react`](../frontend-react/SKILL.md) para:
+Si la carpeta `frontend/` existe en el proyecto:
 
-- Actualizar los tipos TypeScript en `frontend/src/types/index.ts` con los campos nuevos del DTO de salida.
-- Actualizar (o crear) el servicio fetch en `frontend/src/services/<recurso>.service.ts` si hay endpoints nuevos.
-- Actualizar (o crear) la página y componentes si es una entidad nueva.
+#### 9a. **Valorar patrones UI/UX** (obligatorio antes de escribir código React)
+
+**ANTES de implementar cualquier componente, página o flujo de usuario**, consultar el skill [`ui-ux-pro-max`](../ui-ux-pro-max/SKILL.md) para:
+
+- Validar patrones de diseño UI/UX aplicables a la feature
+- Revisar heurísticas de usabilidad (Nielsen, etc.)
+- Verificar accesibilidad (WCAG 2.1, ARIA)
+- Aplicar mejores prácticas de experiencia de usuario
+- Prevenir problemas comunes de diseño antes de escribir código
+
+> **Nota:** Si `ui-ux-pro-max` solo tiene metadata sin implementación completa, continuar con el paso 9b aplicando principios básicos de UX (claridad, feedback visual, consistencia, accesibilidad).
+
+#### 9b. Implementar el frontend
+
+Ejecutar el skill [`frontend-react`](../frontend-react/SKILL.md) para:
+
+- Actualizar los tipos TypeScript en `frontend/src/types/index.ts` con los campos nuevos del DTO de salida
+- Actualizar (o crear) el servicio fetch en `frontend/src/services/<recurso>.service.ts` si hay endpoints nuevos
+- Actualizar (o crear) la página y componentes si es una entidad nueva, aplicando las validaciones UI/UX del paso 9a
 
 Si `frontend/` no existe, saltar este paso.
 
