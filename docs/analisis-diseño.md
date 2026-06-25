@@ -25,7 +25,7 @@ Estructura de capas plana y legible en pantalla, sin patrones complejos (sin CQR
 
 | Capa | Carpeta | Responsabilidad |
 |---|---|---|
-| Modelos de dominio | `Models/` | Entidades del negocio (`TodoItem`, `PlantillaTarea`, `TipoRecurrencia`) |
+| Modelos de dominio | `Models/` | Entidades del negocio (`TodoItem`, `PlantillaTarea`, `TipoRecurrencia`, `Categoria`, `UsuarioAsignado`) |
 | Acceso a datos | `Data/` | `DbContext` y configuración de EF Core |
 | Lógica de negocio | `Services/` | `ITodoService` + `TodoService`, `IPlantillaService` + `PlantillaService` |
 | API / Controladores | `Controllers/` | Orquestación HTTP, sin lógica de negocio |
@@ -36,7 +36,9 @@ DemoCopilot/
 ├── Models/
 │   ├── TodoItem.cs
 │   ├── PlantillaTarea.cs
-│   └── TipoRecurrencia.cs
+│   ├── TipoRecurrencia.cs
+│   ├── Categoria.cs
+│   └── UsuarioAsignado.cs
 ├── Data/
 │   └── AppDbContext.cs
 ├── Services/
@@ -76,6 +78,8 @@ DemoCopilot/
 | `ProximaFecha` | `DateTime?` | Fecha calculada para la siguiente ocurrencia. `null` si no es repetitiva |
 | `PlantillaId` | `int?` | FK opcional a `PlantillaTarea` si la tarea se originó de una plantilla |
 | `UsuarioAsignadoId` | `int?` | FK opcional a `UsuarioAsignado`. `null` si la tarea no tiene usuario asignado |
+| `CategoriaId` | `int?` | FK opcional a `Categoria`. `null` si la tarea no tiene categoría asignada |
+| `Categoria` | `Categoria?` | Navegación virtual a la categoría asociada |
 
 ```csharp
 public class TodoItem
@@ -91,6 +95,8 @@ public class TodoItem
     public PlantillaTarea? Plantilla { get; set; }
     public int? UsuarioAsignadoId { get; set; }
     public UsuarioAsignado? UsuarioAsignado { get; set; }
+    public int? CategoriaId { get; set; }
+    public Categoria? Categoria { get; set; }
 }
 ```
 
@@ -116,6 +122,31 @@ public class UsuarioAsignado
 ```
 
 Relación: un `UsuarioAsignado` puede tener muchas tareas (`TodoItem`). La FK en `TodoItem` es opcional (`SetNull` al eliminar el usuario).
+
+---
+
+### `Categoria`
+
+Categoría para clasificar y agrupar tareas.
+
+| Campo | Tipo | Descripción |
+|---|---|---|
+| `Id` | `int` | Clave primaria, autogenerada |
+| `Nombre` | `string` | Nombre de la categoría. Requerido, máx. 100 caracteres |
+| `Color` | `string` | Color visual en formato hexadecimal (#RRGGBB). Requerido, exactamente 7 caracteres |
+| `Tareas` | `ICollection<TodoItem>` | Navegación a las tareas que pertenecen a esta categoría |
+
+```csharp
+public class Categoria
+{
+    public int Id { get; set; }
+    public string Nombre { get; set; } = string.Empty;
+    public string Color { get; set; } = string.Empty;
+    public ICollection<TodoItem> Tareas { get; set; } = new List<TodoItem>();
+}
+```
+
+Relación: una `Categoria` puede tener muchas tareas (`TodoItem`). La FK en `TodoItem` es opcional (`SetNull` al eliminar la categoría). No se puede eliminar una categoría que tenga tareas asociadas activas.
 
 ---
 
@@ -189,6 +220,17 @@ public enum TipoRecurrencia
 | DELETE | `/api/plantillas/{id}` | Eliminar una plantilla | `204 No Content` | `404` si no existe |
 | POST | `/api/plantillas/{id}/instanciar` | Crear una tarea nueva a partir de la plantilla | `201` + `TodoItem` creado | `404` si plantilla no existe |
 
+### Categorías — `/api/categorias`
+
+| Verbo | Ruta | Descripción | Respuesta OK | Error |
+|---|---|---|---|---|
+| GET | `/api/categorias` | Listar todas las categorías | `200` + array de `Categoria` | — |
+| GET | `/api/categorias/{id}` | Obtener una categoría por ID | `200` + `Categoria` | `404` si no existe |
+| POST | `/api/categorias` | Crear una nueva categoría | `201` + `Categoria` creada | `400` si datos inválidos |
+| PUT | `/api/categorias/{id}` | Actualizar una categoría | `200` + `Categoria` actualizada | `404` / `400` |
+| DELETE | `/api/categorias/{id}` | Eliminar una categoría | `204 No Content` | `404` si no existe, `400` si tiene tareas asociadas |
+| GET | `/api/tareas?categoriaId={id}` | Filtrar tareas por categoría | `200` + array de `TodoItem` | — |
+
 ---
 
 ## 6. Datos de ejemplo
@@ -199,7 +241,8 @@ Cada vez que se añade una entidad nueva, se actualizan los datos de ejemplo en 
 |---|---|
 | `UsuarioAsignado` | Ana García (ana@demo.com), Carlos López (carlos@demo.com) |
 | `PlantillaTarea` | "Revisión semanal" (semanal), "Backup diario" (diaria) |
-| `TodoItem` | "Configurar entorno" (completada), "Revisar PR pendientes" (repetitiva semanal, asignada a Ana) |
+| `Categoria` | "Trabajo" (#FF5733), "Personal" (#33C4FF), "Urgente" (#FF3333) |
+| `TodoItem` | "Configurar entorno" (completada, categoría Trabajo), "Revisar PR pendientes" (repetitiva semanal, asignada a Ana, categoría Trabajo) |
 
 ---
 
@@ -213,6 +256,9 @@ Cada vez que se añade una entidad nueva, se actualizan los datos de ejemplo en 
 - **`POST /completar` en lugar de `PUT` para completar**: la acción de completar una tarea repetitiva tiene un efecto secundario (crear nueva ocurrencia), por lo que merece su propio endpoint de acción en lugar de un `PUT` genérico.
 - **Plantilla como entidad independiente**: `PlantillaTarea` es una entidad propia, no un campo de `TodoItem`, para permitir gestionar y reutilizar plantillas sin acoplarlas al ciclo de vida de las tareas.
 - **Relación opcional `TodoItem → PlantillaTarea`**: la FK `PlantillaId` es nullable; las tareas creadas manualmente no necesitan plantilla.
+- **Sistema de categorías con relación 1:N**: una categoría puede tener muchas tareas, pero cada tarea solo puede tener una categoría. La FK `CategoriaId` es nullable para mantener compatibilidad con tareas existentes sin categoría.
+- **Validación de eliminación de categorías**: no se puede eliminar una categoría si tiene tareas asociadas activas. El sistema retorna `400 Bad Request` con mensaje descriptivo.
+- **Color en formato hexadecimal**: el campo `Color` de la categoría usa formato estándar hex (#RRGGBB) para facilitar la visualización consistente en frontend.
 - **Sin paginación ni autenticación**: fuera del alcance de la demo; añadir solo si se solicita explícitamente.
 - **Código en castellano**: nombres de clases, métodos y variables en español para coherencia con el público hispanohablante del curso.
 
