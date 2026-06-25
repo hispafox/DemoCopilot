@@ -45,7 +45,9 @@ El plan contiene:
 - **Servicios** — orquestación y mapeo
 - **Controladores** — endpoints HTTP
 - **Base de datos** — configuración de EF Core y migraciones
-- **Orden de ejecución de skills** — secuencia exacta a seguir
+- **Skills a invocar** — secuencia exacta de skills a ejecutar (sección 10 del plan)
+
+**IMPORTANTE:** La sección "10. Skills a invocar" del plan especifica QUÉ skills debes usar y EN QUÉ ORDEN. Debes seguir esa tabla al pie de la letra.
 
 ### 2. Verificar el contexto actual
 
@@ -60,273 +62,59 @@ Lee los ficheros existentes antes de modificarlos:
 - `Controllers/` — endpoints actuales
 - `AppTodoList.csproj` — dependencias instaladas
 
-### 3. Implementar siguiendo el plan
+### 3. Ejecutar los skills del plan en orden
 
-Ejecuta cada paso del plan EN EL ORDEN ESPECIFICADO. La secuencia típica es:
+El plan incluye una sección **"10. Skills a invocar"** con una tabla que especifica:
 
-#### 3.1. Modelo (`Models/`)
+- Qué skill ejecutar
+- En qué orden
+- Qué genera cada skill para esta feature específica
 
-Si el plan define entidades nuevas o campos nuevos:
+**TU TRABAJO:** Leer esa tabla y ejecutar cada skill EN EL ORDEN INDICADO, pasándole el contexto del plan.
 
-```csharp
-namespace AppTodoList.Models;
+#### Ejemplo de tabla de skills (del plan-categorias.md):
 
-public class NombreEntidad
-{
-    public int Id { get; set; }
-    public string Campo { get; set; } = string.Empty;
-    public DateTime FechaCreacion { get; set; }
-    // ... resto de propiedades según el plan
-}
-```
+| Orden | Skill | Motivo |
+|-------|-------|--------|
+| 1 | `diseño-analisis` | Actualizar análisis con entidad Categoria |
+| 2 | `modelo` | Crear Models/Categoria.cs y modificar TodoItem |
+| 3 | `dto` | Crear CategoriasDtos.cs y modificar TareaDto |
+| 4 | `base-de-datos` | Añadir DbSet, configurar relación, migración |
+| 5 | `logica-negocio` | Crear CategoriaLogica, modificar TodoLogica |
+| 6 | `validaciones` | Validaciones en DTOs y lógica |
+| 7 | `servicio` | Crear CategoriaService, modificar TodoService |
+| 8 | `controlador` | Crear CategoriasController, modificar TareasController |
 
-**Convenciones:**
-- Propiedades en PascalCase.
-- Strings no nullables con valor por defecto `= string.Empty;`.
-- DateTime para fechas.
-- Propiedades de navegación para relaciones (1:N, N:M).
+#### Cómo ejecutar cada skill
 
-#### 3.2. DTOs (`Dtos/`)
+Para cada fila de la tabla:
 
-Crea los DTOs de entrada y salida exactamente como aparecen en el plan.
+1. **Lee las instrucciones del skill** desde `.github/skills/{nombre-skill}/SKILL.md`
+2. **Ejecuta el skill** siguiendo sus instrucciones, usando el contexto del plan
+3. **Verifica el resultado** (compilación, migraciones, etc.)
+4. **Pasa al siguiente skill** solo cuando el anterior haya terminado correctamente
 
-```csharp
-namespace AppTodoList.Dtos;
+**IMPORTANTE:**
+- NO saltarte ningún skill de la tabla
+- NO cambiar el orden
+- NO implementar manualmente lo que un skill debe hacer
+- SI un skill falla, detente y reporta el error antes de continuar
 
-// DTO de entrada
-public record CrearXxxDto(
-    string Campo1,
-    int Campo2
-);
+#### Skills disponibles
 
-// DTO de salida
-public record XxxDto(
-    int Id,
-    string Campo1,
-    int Campo2,
-    DateTime FechaCreacion
-);
-```
+Los skills están en `.github/skills/`. Los más comunes:
 
-**Convenciones:**
-- Usar `record` en lugar de `class`.
-- Nombres terminan en `Dto`.
-- Los de entrada llevan prefijo `Crear`/`Actualizar`.
+- **diseño-analisis**: Actualiza `docs/analisis-diseño.md`
+- **modelo**: Crea/modifica entidades en `Models/`
+- **dto**: Crea/modifica DTOs en `Dtos/`
+- **base-de-datos**: Configura DbContext, Fluent API, migraciones
+- **logica-negocio**: Crea/modifica `LogicaNegocio/`
+- **validaciones**: Añade validaciones a DTOs y lógica
+- **servicio**: Crea/modifica `Services/`
+- **controlador**: Crea/modifica `Controllers/`
+- **commit-message**: Genera mensaje de commit
 
-#### 3.3. Base de datos (`Data/AppDbContext.cs`)
-
-Añade el nuevo `DbSet` y configura relaciones en `OnModelCreating`:
-
-```csharp
-public DbSet<NombreEntidad> NombresEntidades { get; set; }
-
-protected override void OnModelCreating(ModelBuilder modelBuilder)
-{
-    // Configuración Fluent API según el plan
-    modelBuilder.Entity<NombreEntidad>(entity =>
-    {
-        entity.HasKey(e => e.Id);
-        entity.Property(e => e.Campo).IsRequired().HasMaxLength(200);
-        // ... resto de configuración
-    });
-}
-```
-
-**Después de modificar el DbContext:**
-
-```bash
-dotnet ef migrations add NombreMigracion
-```
-
-Si el comando falla con algún error, corrige el problema antes de continuar.
-
-#### 3.4. Lógica de negocio (`LogicaNegocio/`)
-
-Crea la interfaz y la implementación:
-
-**IXxxLogica.cs:**
-```csharp
-namespace AppTodoList.LogicaNegocio;
-
-public interface IXxxLogica
-{
-    Task<List<NombreEntidad>> ObtenerTodosAsync();
-    Task<NombreEntidad?> ObtenerPorIdAsync(int id);
-    Task<NombreEntidad> CrearAsync(NombreEntidad entidad);
-    Task ActualizarAsync(NombreEntidad entidad);
-    Task EliminarAsync(int id);
-}
-```
-
-**XxxLogica.cs:**
-```csharp
-namespace AppTodoList.LogicaNegocio;
-
-public class XxxLogica : IXxxLogica
-{
-    private readonly AppDbContext _context;
-
-    public XxxLogica(AppDbContext context)
-    {
-        _context = context;
-    }
-
-    public async Task<List<NombreEntidad>> ObtenerTodosAsync()
-    {
-        return await _context.NombresEntidades.ToListAsync();
-    }
-
-    // ... resto de métodos según el plan
-}
-```
-
-**Convenciones:**
-- Todo método que toque base de datos es `async`.
-- Usar LINQ con EF Core (`ToListAsync`, `FirstOrDefaultAsync`, etc.).
-- Incluir las validaciones de negocio aquí (existencia, unicidad, reglas de dominio).
-
-#### 3.5. Validaciones
-
-Añade las validaciones especificadas en el plan:
-
-- **En DTOs:** usar Data Annotations si se especifican.
-- **En lógica:** lanzar excepciones descriptivas para reglas de negocio.
-
-```csharp
-if (await _context.NombresEntidades.AnyAsync(e => e.Campo == valor))
-{
-    throw new InvalidOperationException("El campo ya existe.");
-}
-```
-
-#### 3.6. Servicios (`Services/`)
-
-Crea la interfaz y la implementación del servicio:
-
-**IXxxService.cs:**
-```csharp
-namespace AppTodoList.Services;
-
-public interface IXxxService
-{
-    Task<List<XxxDto>> ObtenerTodosAsync();
-    Task<XxxDto?> ObtenerPorIdAsync(int id);
-    Task<XxxDto> CrearAsync(CrearXxxDto dto);
-    Task ActualizarAsync(int id, ActualizarXxxDto dto);
-    Task EliminarAsync(int id);
-}
-```
-
-**XxxService.cs:**
-```csharp
-namespace AppTodoList.Services;
-
-public class XxxService : IXxxService
-{
-    private readonly IXxxLogica _logica;
-
-    public XxxService(IXxxLogica logica)
-    {
-        _logica = logica;
-    }
-
-    public async Task<List<XxxDto>> ObtenerTodosAsync()
-    {
-        var entidades = await _logica.ObtenerTodosAsync();
-        return entidades.Select(e => new XxxDto(
-            e.Id,
-            e.Campo1,
-            e.Campo2,
-            e.FechaCreacion
-        )).ToList();
-    }
-
-    // ... resto de métodos con mapeo DTO ↔ entidad
-}
-```
-
-**Convenciones:**
-- El servicio NO accede directamente al `DbContext` — usa la lógica.
-- El servicio SÍ hace el mapeo entre DTOs y entidades.
-- Nombres de métodos en español.
-
-#### 3.7. Controlador (`Controllers/`)
-
-Crea o actualiza el controlador con los endpoints definidos en el plan:
-
-```csharp
-using Microsoft.AspNetCore.Mvc;
-
-namespace AppTodoList.Controllers;
-
-[ApiController]
-[Route("api/[controller]")]
-public class XxxController : ControllerBase
-{
-    private readonly IXxxService _service;
-
-    public XxxController(IXxxService service)
-    {
-        _service = service;
-    }
-
-    [HttpGet]
-    public async Task<ActionResult<List<XxxDto>>> ObtenerTodos()
-    {
-        var resultados = await _service.ObtenerTodosAsync();
-        return Ok(resultados);
-    }
-
-    [HttpGet("{id}")]
-    public async Task<ActionResult<XxxDto>> ObtenerPorId(int id)
-    {
-        var resultado = await _service.ObtenerPorIdAsync(id);
-        if (resultado == null)
-            return NotFound();
-        return Ok(resultado);
-    }
-
-    [HttpPost]
-    public async Task<ActionResult<XxxDto>> Crear([FromBody] CrearXxxDto dto)
-    {
-        var resultado = await _service.CrearAsync(dto);
-        return CreatedAtAction(nameof(ObtenerPorId), new { id = resultado.Id }, resultado);
-    }
-
-    [HttpPut("{id}")]
-    public async Task<ActionResult> Actualizar(int id, [FromBody] ActualizarXxxDto dto)
-    {
-        await _service.ActualizarAsync(id, dto);
-        return NoContent();
-    }
-
-    [HttpDelete("{id}")]
-    public async Task<ActionResult> Eliminar(int id)
-    {
-        await _service.EliminarAsync(id);
-        return NoContent();
-    }
-}
-```
-
-**Convenciones:**
-- Controlador solo orquesta — NO contiene lógica de negocio.
-- Usa los verbos HTTP correctos (GET, POST, PUT, DELETE).
-- Devuelve códigos de estado apropiados (200, 201, 204, 404).
-
-#### 3.8. Registrar dependencias en `Program.cs`
-
-Añade los servicios y lógicas al contenedor de DI:
-
-```csharp
-// Lógica de negocio
-builder.Services.AddScoped<IXxxLogica, XxxLogica>();
-
-// Servicios
-builder.Services.AddScoped<IXxxService, XxxService>();
-```
-
-**IMPORTANTE:** Añade estas líneas después de la configuración del `DbContext` y antes de `var app = builder.Build();`.
+Cada skill tiene su propio SKILL.md con instrucciones detalladas.
 
 ### 4. Compilar y verificar
 
@@ -386,11 +174,23 @@ dotnet ef migrations add NuevoNombre
 
 Al finalizar, debes entregar:
 
-- ✅ Código implementado siguiendo el plan al pie de la letra.
-- ✅ Todo el código compila sin errores (`dotnet build` exitoso).
-- ✅ Migraciones de base de datos creadas (si aplica).
-- ✅ Dependencias registradas en `Program.cs`.
-- ✅ Convenciones de código respetadas (español, async/await, inyección de dependencias).
+- ✅ Todos los skills del plan ejecutados en el orden especificado
+- ✅ Código implementado siguiendo el plan al pie de la letra
+- ✅ Todo el código compila sin errores (`dotnet build` exitoso)
+- ✅ Migraciones de base de datos creadas (si el plan las requiere)
+- ✅ Dependencias registradas en `Program.cs` (si el plan añade servicios)
+- ✅ Convenciones de código respetadas (español, async/await, inyección de dependencias)
+
+**Formato de reporte:**
+
+```
+✅ Skills ejecutados: {N}/{N}
+✅ Build: exitoso
+✅ Migraciones: {nombre-migracion} (si aplica)
+✅ Archivos modificados: {N}
+
+Implementación completada según {ruta-plan}.
+```
 
 **NO:** implementes tests (eso es responsabilidad del agente `dotnet-tester`), ni ejecutes la aplicación (`dotnet run`), ni modifiques documentación fuera del código.
 
@@ -400,17 +200,32 @@ Al finalizar, debes entregar:
 
 **Entrada:** Ruta del plan `docs/plan-usuarios-asignados.md`
 
-**Salida:**
-1. Lee el plan completo.
-2. Crea `Models/UsuarioAsignado.cs`.
-3. Crea `Dtos/UsuariosAsignadosDtos.cs` (entrada y salida).
-4. Actualiza `Data/AppDbContext.cs` con el nuevo DbSet y configuración.
-5. Ejecuta `dotnet ef migrations add AgregarUsuarioAsignado`.
-6. Crea `LogicaNegocio/IUsuarioAsignadoLogica.cs` y `UsuarioAsignadoLogica.cs`.
-7. Añade validaciones en la lógica (campo nombre no vacío, unicidad de email).
-8. Crea `Services/IUsuarioAsignadoService.cs` y `UsuarioAsignadoService.cs`.
-9. Crea `Controllers/UsuariosAsignadosController.cs` con 5 endpoints REST.
-10. Registra las dependencias en `Program.cs`.
-11. Ejecuta `dotnet build` → ✅ Build succeeded.
+**Proceso:**
 
-**Mensaje final:** "Implementación completada. La aplicación compila correctamente. Ficheros modificados: 9. Migración creada: 20260625_AgregarUsuarioAsignado."
+1. Lees `docs/plan-usuarios-asignados.md` completo
+2. Localizas la sección "10. Skills a invocar"
+3. Ves una tabla con 8 skills en orden: diseño-analisis → modelo → dto → base-de-datos → logica-negocio → validaciones → servicio → controlador
+4. Para cada skill:
+   - Lees `.github/skills/{nombre-skill}/SKILL.md`
+   - Ejecutas el skill con el contexto del plan
+   - Verificas que se completó correctamente
+5. Al terminar todos los skills, ejecutas `dotnet build` para verificar compilación
+
+**Salida:**
+
+```
+✅ Skill 1/8 completado: diseño-analisis
+✅ Skill 2/8 completado: modelo (UsuarioAsignado.cs creado)
+✅ Skill 3/8 completado: dto (UsuariosAsignadosDtos.cs creado)
+✅ Skill 4/8 completado: base-de-datos (DbSet añadido, migración AgregarUsuarioAsignado generada)
+✅ Skill 5/8 completado: logica-negocio (IUsuarioAsignadoLogica + implementación)
+✅ Skill 6/8 completado: validaciones (Data Annotations en DTOs, validación de email único en lógica)
+✅ Skill 7/8 completado: servicio (IUsuarioAsignadoService + implementación)
+✅ Skill 8/8 completado: controlador (UsuariosAsignadosController con 5 endpoints)
+
+Build succeeded. Ficheros modificados: 9.
+Migración creada: 20260625_AgregarUsuarioAsignado
+Dependencias registradas en Program.cs
+
+Implementación completada según plan.
+```
