@@ -42,6 +42,8 @@ El orquestador es el único que toca Git. Los tres especialistas ni se enteran d
 | **Planificador** | Agente `@planificador-democopilot` | Solo el plan `.md` | `read, search, edit` | `docs/plan-<slug>.md` |
 | **Desarrollador** | Agente `@desarrollador-democopilot` | Sí | `read, search, edit, execute` | Código que compila |
 | **Verificador** | Agente `@verificador-democopilot` | No | `read, search, execute` | Veredicto APROBADO / REVISAR |
+| **Auditor de calidad** | Agente `@auditor-calidad` | No | `read, search` | Informe con hallazgos priorizados |
+| **Documentador de usuario** | Agente `@documentador-usuario` | No | `read, search, edit, terminal` | Manual de usuario (.md/.docx/.pdf) |
 
 Fíjate en una cosa: el planificador y el verificador **no escriben código de producción**. El planificador solo deja un `.md`; el verificador solo lee y compila. Es la versión software del principio de que quien diseña el examen no debería ser quien lo aprueba. El que verifica no arregla — señala. Y el que arregla es siempre el desarrollador.
 
@@ -176,6 +178,8 @@ flowchart TD
     AG --> A2[desarrollador-democopilot.agent.md]
     AG --> A3[verificador-democopilot.agent.md]
     AG --> A4[orquestador-democopilot.agent.md]
+    AG --> A5[auditor-calidad.agent.md]
+    AG --> A6[documentador-usuario.agent.md]
 
     SRC --> M[Models/]
     SRC --> D[Dtos/]
@@ -185,9 +189,10 @@ flowchart TD
 
     DOCS --> PL[plan-*.md<br/>generados por el planificador]
     DOCS --> AD[analisis-diseño.md]
+    DOCS --> MU[manual-usuario.md/docx/pdf<br/>generados por documentador-usuario]
 ```
 
-Todo vive en `.github/` — agentes, skills y convenciones. El orquestador y los tres especialistas están en `.github/agents/`.
+Todo vive en `.github/` — agentes, skills y convenciones. El orquestador y los especialistas están en `.github/agents/`.
 
 ---
 
@@ -201,6 +206,8 @@ Los agentes de GitHub Copilot tienen nombres completos y herramientas específic
 | **Planificador** | `@planificador-democopilot` | `read`, `search`, `edit` |
 | **Desarrollador** | `@desarrollador-democopilot` | `read`, `search`, `edit`, `execute` |
 | **Verificador** | `@verificador-democopilot` | `read`, `search`, `execute` |
+| **Auditor de calidad** | `@auditor-calidad` | `read`, `search` |
+| **Documentador de usuario** | `@documentador-usuario` | `read`, `search`, `edit`, `terminal` |
 
 Todas las convenciones del proyecto están en `.github/copilot-instructions.md`, que GitHub Copilot carga automáticamente.
 
