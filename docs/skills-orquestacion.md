@@ -28,7 +28,8 @@ flowchart TD
     SKILLS --> SK6[validaciones]
     SKILLS --> SK7[servicio]
     SKILLS --> SK8[controlador]
-    SKILLS --> SK9[frontend-react]
+    SKILLS --> SK9[tests-unitarios]
+    SKILLS --> SK10[frontend-react]
     
     D --> CODE
     
@@ -69,6 +70,7 @@ flowchart TD
 | `validaciones` | `Dtos/` + `LogicaNegocio/` | Anotaciones de validación y reglas de dominio |
 | `servicio` | `Services/` | Orquestación: mapeo DTO ↔ entidad, delegación a lógica |
 | `controlador` | `Controllers/` | Capa HTTP: recibe peticiones, llama al servicio, devuelve respuesta |
+| `tests-unitarios` | `Tests/` | **Pruebas unitarias (primer nivel de la pirámide).** Genera proyecto xUnit + Moq si no existe, crea tests para Controllers, Services, LogicaNegocio con patrón AAA, cobertura de casos normales, edge cases, validaciones y errores |
 | `ui-ux-pro-max` | — | **VALORAR ANTES DE FRONTEND.** Catálogo de patrones UI/UX, heurísticas de usabilidad, accesibilidad y mejores prácticas para validar diseño antes de escribir código React |
 | `frontend-react` | `frontend/` | Frontend React + Vite + TypeScript: tipos, servicios fetch, páginas y componentes |
 | `github-flow` | — | **SOLO USADO POR ORQUESTADOR.** Encapsula operaciones GitHub MCP (leer issues, crear ramas, crear PRs, comentar). Usado automáticamente en Modo Issue (`@orquestador issue #N`). |
@@ -97,6 +99,7 @@ flowchart TD
     VA[validaciones]
     SV[servicio]
     CT[controlador]
+    TU[tests-unitarios]
     UX[ui-ux-pro-max]
     FR[frontend-react]
     CM[commit-message]
@@ -109,7 +112,8 @@ flowchart TD
     LN --> VA
     VA --> SV
     SV --> CT
-    CT --> UX
+    CT --> TU
+    TU --> UX
     UX --> FR
     FR --> CM
 
@@ -122,6 +126,7 @@ flowchart TD
     style VA fill:#fef3c7,stroke:#d97706
     style SV fill:#ede9fe,stroke:#7c3aed
     style CT fill:#ffedd5,stroke:#ea580c
+    style TU fill:#d1fae5,stroke:#10b981
     style UX fill:#fef3c7,stroke:#f59e0b
     style FR fill:#fdf4ff,stroke:#7c3aed
     style CM fill:#f1f5f9,stroke:#64748b
@@ -176,6 +181,7 @@ graph LR
     LN["LogicaNegocio/"]
     SV["Services/"]
     CT["Controllers/"]
+    TS["Tests/"]
     PR["Program.cs"]
     AP["appsettings.json"]
 
@@ -196,6 +202,11 @@ graph LR
     LN -->|"validación de existencia"| LN
     LN -->|"interfaz I*Logica"| SV
     SV -->|"interfaz I*Service"| CT
+    
+    CT -->|"clases a testear"| TS
+    SV -->|"clases a testear"| TS
+    LN -->|"clases a testear"| TS
+    
     DT -->|"tipos TypeScript"| FR["frontend/src/types/"]
     CT -->|"endpoints consumidos"| FR
 

@@ -14,6 +14,7 @@ Tú hablas con uno solo. Ese uno reparte.
 flowchart LR
     U([👤 Usuario]) -->|@orquestador funcionalidad| O[🧭 Orquestador<br/>agente coordinador]
     U -.->|@orquestador issue #N| O
+    U -.->|@generador-tests-unitarios| T[🧪 Generador Tests<br/>agente especialista]
     O -->|agent| P[🔎 Planificador<br/>subagente]
     O -->|agent| D[⚙️ Desarrollador<br/>subagente]
     O -->|agent| V[✅ Verificador<br/>subagente]
@@ -23,12 +24,13 @@ flowchart LR
     P -.escribe.-> PL[/docs/plan-*.md/]
     D -.edita.-> C[/*.cs/]
     V -.lee + dotnet build.-> C
+    T -.genera.-> TS[/Tests/**Tests.cs/]
 
     classDef orq fill:#1f6feb,color:#fff,stroke:#0b3d91;
     classDef sub fill:#238636,color:#fff,stroke:#0b3d91;
     classDef ext fill:#6e40c9,color:#fff,stroke:#0b3d91;
     class O orq;
-    class P,D,V sub;
+    class P,D,V,T sub;
     class GH,GHI ext;
 ```
 
@@ -44,6 +46,7 @@ El orquestador es el único que toca Git. Los tres especialistas ni se enteran d
 | **Planificador** | Agente `@planificador-democopilot` | Solo el plan `.md` | `read, search, edit` | `docs/plan-<slug>.md` |
 | **Desarrollador** | Agente `@desarrollador-democopilot` | Sí | `read, search, edit, execute` | Código que compila |
 | **Verificador** | Agente `@verificador-democopilot` | No | `read, search, execute` | Veredicto APROBADO / REVISAR |
+| **Generador de tests** | Agente `@generador-tests-unitarios` | Sí (solo tests) | `read, search, edit, execute` | Tests unitarios (xUnit + Moq) |
 | **Auditor de calidad** | Agente `@auditor-calidad` | No | `read, search, github` | Informe + issues de GitHub (si MCP configurado) |
 | **Documentador de usuario** | Agente `@documentador-usuario` | No | `read, search, edit, terminal` | Manual de usuario (.md/.docx/.pdf) |
 
@@ -196,6 +199,103 @@ El auditor **busca problemas, no los justifica**. Su trabajo es ser despiadado. 
 ```
 
 Sin argumento, audita toda la aplicación.
+
+---
+
+## 5.6. El generador de tests unitarios — primer nivel de la pirámide
+
+El `@generador-tests-unitarios` es el agente responsable de crear y mantener las **pruebas unitarias** del proyecto (primer nivel de la pirámide de pruebas). Se invoca automáticamente al terminar una implementación o manualmente cuando necesitas añadir tests.
+
+### Ámbito de responsabilidad
+
+**SOLO pruebas unitarias:**
+- ✅ Tests de lógica aislada (Services, LogicaNegocio, métodos auxiliares)
+- ✅ Tests de Controllers con mocks de dependencias
+- ✅ Casos normales, edge cases, validaciones y manejo de errores
+- ❌ Tests de integración (base de datos real, HTTP real)
+- ❌ Tests E2E (UI, navegador, flujo completo)
+
+### Qué hace
+
+1. **Verifica el proyecto de tests** — crea `AppTodoList.Tests` si no existe, con xUnit + Moq + FluentAssertions
+2. **Analiza el código de producción** — identifica qué clases tienen tests y cuáles no
+3. **Genera los tests faltantes** — crea ficheros `{ClaseTesteada}Tests.cs` en `Tests/`
+4. **Sigue el patrón AAA** — Arrange-Act-Assert en todos los tests
+5. **Cubre casos críticos** — caso feliz, edge cases, validaciones, null/no encontrado, manejo de errores
+6. **Ejecuta los tests** — `dotnet build` + `dotnet test` antes de reportar
+7. **Reporta cobertura** — informa al usuario de los tests creados y resultados
+
+### Estructura de tests generados
+
+```
+Tests/
+├── Controllers/
+│   ├── TareasControllerTests.cs
+│   └── CategoriasControllerTests.cs
+├── Services/
+│   ├── TodoServiceTests.cs
+│   └── CategoriaServiceTests.cs
+└── LogicaNegocio/
+    ├── TodoLogicaTests.cs
+    └── CategoriaLogicaTests.cs
+```
+
+### Convenciones de nomenclatura
+
+- **Fichero**: `{ClaseTesteada}Tests.cs`
+- **Clase**: `{ClaseTesteada}Tests`
+- **Métodos**: `{MétodoTesteado}_{Escenario}_{ResultadoEsperado}`
+
+Ejemplo:
+```csharp
+[Fact]
+public async Task ObtenerPorId_CuandoExiste_DevuelveTarea()
+{
+    // Arrange
+    var mockLogica = new Mock<ITodoLogica>();
+    mockLogica.Setup(x => x.ObtenerPorIdAsync(1))
+              .ReturnsAsync(new TodoItem { Id = 1, Title = "Test" });
+    var service = new TodoService(mockLogica.Object);
+
+    // Act
+    var resultado = await service.ObtenerPorIdAsync(1);
+
+    // Assert
+    resultado.Should().NotBeNull();
+    resultado.Title.Should().Be("Test");
+}
+```
+
+### Cuándo usarlo
+
+- Después de implementar una feature nueva (cada feature lleva sus tests)
+- Al detectar código sin tests (cobertura baja)
+- Al refactorizar código existente (validar que el comportamiento no cambia)
+- Como parte del ciclo de CI/CD (los tests deben pasar antes de merge)
+
+**Ejemplo de invocación:**
+
+```
+# Generar todos los tests faltantes
+@generador-tests-unitarios
+
+# Tests solo para una clase
+@generador-tests-unitarios TodoService
+
+# Tests de toda una capa
+@generador-tests-unitarios Services/
+```
+
+### Integración con el flujo de desarrollo
+
+El generador de tests **NO está en el ciclo principal del orquestador** (planificar → desarrollar → verificar → commit). Se invoca en uno de estos momentos:
+
+1. **Manualmente por el usuario** — después de una implementación
+2. **Por el desarrollador** — al terminar de implementar un plan
+3. **Por el verificador** — si detecta falta de tests, puede recomendarlo
+4. **Por el orquestador (futuro)** — podría añadirse como paso opcional antes del commit
+
+**Principio clave:** Cada feature nueva lleva sus tests. No crear issues separados para "añadir tests" — van con la feature.
 
 ---
 

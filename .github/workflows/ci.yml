@@ -26,9 +26,17 @@ jobs:
     - name: Compilar proyecto
       run: dotnet build --no-restore --configuration Release
     
-    - name: Ejecutar tests
-      run: dotnet test --no-build --configuration Release --verbosity normal
-      continue-on-error: true  # Por si aún no hay proyecto de tests
+    - name: Ejecutar tests con cobertura
+      run: dotnet test --no-build --configuration Release --verbosity normal --collect:"XPlat Code Coverage" --results-directory TestResults
+
+    - name: Subir resultados de tests y cobertura
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: backend-test-results
+        path: |
+          TestResults/
+        retention-days: 7
   
   frontend:
     name: Frontend (React + Vite)

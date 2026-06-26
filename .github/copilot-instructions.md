@@ -75,6 +75,7 @@ dotnet ef database update
 | `validaciones` | Añadir validaciones a DTOs y lógica |
 | `servicio` | Crear o actualizar `Services/` |
 | `controlador` | Crear o actualizar `Controllers/` |
+| `tests-unitarios` | **Generar pruebas unitarias (primer nivel de la pirámide).** Crea el proyecto xUnit + Moq si no existe, genera tests para Controllers, Services, LogicaNegocio con cobertura de casos normales, edge cases y manejo de errores. Cada feature nueva debe incluir sus tests. |
 | `ui-ux-pro-max` | **Consultar ANTES de implementar frontend.** Catálogo de patrones de diseño UI/UX, heurísticas de usabilidad y mejores prácticas. Úsalo para validar diseño de componentes, flujos de usuario, accesibilidad y experiencia antes de escribir código React. |
 | `frontend-react` | Crear o actualizar el frontend React + Vite + TypeScript en `frontend/` |
 | `github-flow` | **SOLO USADO POR ORQUESTADOR.** Encapsula operaciones GitHub (leer issues, crear ramas, PRs, comentarios). Usado automáticamente cuando invocas `@orquestador issue #N`. |
@@ -90,6 +91,7 @@ dotnet ef database update
 | `@planificador-democopilot` | Planificar una feature nueva, generar `docs/plan-*.md` |
 | `@desarrollador-democopilot` | Implementar un plan de `docs/plan-*.md` capa a capa |
 | `@verificador-democopilot` | Verificar que la implementación de un plan es correcta |
+| `@generador-tests-unitarios` | **Generar pruebas unitarias (pirámide nivel 1).** Crea proyecto xUnit + Moq si no existe, genera tests para Controllers, Services, LogicaNegocio con patrón AAA. Cubre casos normales, edge cases, validaciones y errores. Ejecuta `dotnet test` antes de reportar. |
 | `@auditor-calidad` | **Auditoría completa de calidad:** code smells, deuda técnica, SOLID, seguridad, convenciones. Genera informe markdown + issues de GitHub (si MCP configurado). Modo abogado del diablo. |
 | `@documentador-usuario` | **Generar y actualizar documentación de usuario** en docx, pdf o markdown. Analiza el proyecto, detecta cambios, documenta funcionalidades con lenguaje claro y placeholders para capturas. |
 
@@ -128,7 +130,7 @@ Ver documentación completa en [`docs/ARQUITECTURA-AGENTES.md`](docs/ARQUITECTUR
 
 ---
 
-- **Cada feature nueva lleva su test** — no crear issues separados para tests.
+- **Cada feature nueva lleva su test** — usa `@generador-tests-unitarios` o el skill `tests-unitarios` al terminar la implementación. No crear issues separados para tests.
 - Mantener el código simple: si hay una forma más corta de hacer algo, úsala.
 - No añadir features no pedidas (sin logging estructurado, sin health checks, sin paginación) a menos que se solicite explícitamente.
 - Los snippets de código deben caber en una pantalla de presentación (~30 líneas).
