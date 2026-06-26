@@ -4,11 +4,63 @@ Este documento describe el conjunto de skills disponibles en el proyecto, su pro
 
 ---
 
+## 0. Agentes vs. Skills: la arquitectura completa
+
+Los **skills** son las herramientas. Los **agentes** son quienes las usan.
+
+```mermaid
+flowchart TD
+    U[Usuario] --> O[Orquestador]
+    O --> P[Planificador]
+    O --> D[Desarrollador]
+    O --> V[Verificador]
+    
+    P --> CODE[Codigo]
+    P --> PLAN[plan.md]
+    
+    D --> PLAN
+    D --> SKILLS[Skills]
+    SKILLS --> SK1[diseno-analisis]
+    SKILLS --> SK2[modelo]
+    SKILLS --> SK3[dto]
+    SKILLS --> SK4[base-de-datos]
+    SKILLS --> SK5[logica-negocio]
+    SKILLS --> SK6[validaciones]
+    SKILLS --> SK7[servicio]
+    SKILLS --> SK8[controlador]
+    SKILLS --> SK9[frontend-react]
+    
+    D --> CODE
+    
+    V --> CODE
+    V --> O
+    O --> GIT[Git]
+    
+    style O fill:#1f6feb,color:#fff
+    style P fill:#238636,color:#fff
+    style D fill:#238636,color:#fff
+    style V fill:#238636,color:#fff
+    style SKILLS fill:#fdf4ff,stroke:#a21caf,stroke-width:2px
+```
+
+**Flujo completo:**
+
+1. **Usuario** invoca `@orquestador-democopilot <feature>`
+2. **Orquestador** coordina el ciclo completo:
+   - Llama a **Planificador** → genera `docs/plan-<slug>.md`
+   - Llama a **Desarrollador** → lee el plan e **invoca los skills necesarios en orden**
+   - Llama a **Verificador** → comprueba que compila y cumple criterios (bucle hasta 3 iter.)
+   - Hace **commit + push** cuando el verificador da APROBADO
+
+**El desarrollador es quien ejecuta los skills** según la tabla de skills del plan (sección 10 del plan). No hay un "orquestador de skills" separado — el agente desarrollador-democopilot lee el plan y va invocando cada skill que corresponda.
+
+---
+
 ## 1. Catálogo de skills
 
 | Skill | Carpeta generada | Responsabilidad |
 |---|---|---|
-| `nueva-feature` | _todas_ | **Orquestador principal.** Implementa cualquier feature nueva de principio a fin. Invoca el resto de skills en orden. |
+| `nueva-feature` | _todas_ | **Implementación completa end-to-end.** Detecta qué capas afecta la feature y orquesta la invocación de todos los skills necesarios en orden. |
 | `diseño-analisis` | `docs/` | Documento de análisis y diseño — fuente de verdad de todo lo demás |
 | `modelo` | `Models/` | Entidades de dominio (clases C#) |
 | `dto` | `Dtos/` | Contratos de entrada y salida de la API |
@@ -19,30 +71,34 @@ Este documento describe el conjunto de skills disponibles en el proyecto, su pro
 | `controlador` | `Controllers/` | Capa HTTP: recibe peticiones, llama al servicio, devuelve respuesta |
 | `ui-ux-pro-max` | — | **VALORAR ANTES DE FRONTEND.** Catálogo de patrones UI/UX, heurísticas de usabilidad, accesibilidad y mejores prácticas para validar diseño antes de escribir código React |
 | `frontend-react` | `frontend/` | Frontend React + Vite + TypeScript: tipos, servicios fetch, páginas y componentes |
+| `actualizar-documentacion` | `docs/` | **Sincronizar docs con código.** Mantiene actualizada la documentación técnica cuando cambian agentes, skills o arquitectura. Corrige diagramas Mermaid problemáticos |
 | `commit-message` | — | Genera el mensaje de commit siguiendo convenciones del proyecto |
 
 ---
 
 ## 2. Flujo de ejecución — orden obligatorio
 
-Usa el skill `nueva-feature` para ejecutar todo el proceso de una vez. Internamente invoca los skills individuales en este orden:
+El **agente desarrollador-democopilot** lee el plan generado por el planificador y ejecuta los skills en el orden especificado en la sección 10 del plan. Para implementaciones completas, el skill `nueva-feature` puede invocar todos los pasos de una vez.
+
+Orden estándar de ejecución:
 
 ```mermaid
 flowchart TD
-    NF(["🚀 nueva-feature\nPetición de feature"])
+    DEV([desarrollador-democopilot])
 
-    DA["🔍 diseño-analisis\ndocs/analisis-diseño.md"]
-    M["📦 modelo\nModels/*.cs"]
-    DTO["📄 dto\nDtos/*Dto.cs"]
-    BD["🗄️ base-de-datos\nData/AppDbContext.cs\nappsettings.json"]
-    LN["⚙️ logica-negocio\nLogicaNegocio/I*Logica.cs\nLogicaNegocio/*Logica.cs"]
-    VA["✔️ validaciones\nDtos/ + LogicaNegocio/"]
-    SV["🔀 servicio\nServices/I*Service.cs\nServices/*Service.cs"]
-    CT["🌐 controlador\nControllers/*Controller.cs"]
-    FR["⚛️ frontend-react\nfrontend/src/types/\nfrontend/src/services/\nfrontend/src/pages/"]
-    CM["✅ commit-message\nMensaje de commit"]
+    DA[diseño-analisis]
+    M[modelo]
+    DTO[dto]
+    BD[base-de-datos]
+    LN[logica-negocio]
+    VA[validaciones]
+    SV[servicio]
+    CT[controlador]
+    UX[ui-ux-pro-max]
+    FR[frontend-react]
+    CM[commit-message]
 
-    NF --> DA
+    DEV --> DA
     DA --> M
     M --> DTO
     DTO --> BD
@@ -54,9 +110,7 @@ flowchart TD
     UX --> FR
     FR --> CM
 
-    UX["🎭 ui-ux-pro-max\nValidación de patrones UI/UX\ny mejores prácticas"]
-
-    style NF fill:#fdf4ff,stroke:#a21caf,stroke-width:2px
+    style DEV fill:#238636,color:#fff,stroke:#0b3d91,stroke-width:2px
     style DA fill:#dbeafe,stroke:#3b82f6
     style M  fill:#dcfce7,stroke:#16a34a
     style DTO fill:#fef9c3,stroke:#ca8a04
@@ -123,35 +177,35 @@ Una vez ejecutados todos los skills, la aplicación queda estructurada en capas 
 ```mermaid
 flowchart LR
     subgraph HTTP["Capa HTTP"]
-        C["Controller\n[ApiController]"]
+        C["Controller"]
     end
 
-    subgraph DTO_IN["DTOs de entrada (validados)"]
-        DI["Crear*Dto\n[Required][MaxLength]\nActualizar*Dto"]
+    subgraph DTO_IN["DTOs entrada"]
+        DI["Crear*Dto Actualizar*Dto"]
     end
 
-    subgraph DTO_OUT["DTOs de salida"]
+    subgraph DTO_OUT["DTOs salida"]
         DO["*Dto"]
     end
 
-    subgraph SVC["Capa de Orquestación"]
+    subgraph SVC["Capa Orquestación"]
         SI["I*Service"]
         SS["*Service"]
         SI -.implementa.- SS
     end
 
-    subgraph BL["Lógica de Negocio + Validaciones"]
+    subgraph BL["Lógica Negocio"]
         LI["I*Logica"]
-        LS["*Logica\n(reglas de dominio,\nvalidación de existencia)"]
+        LS["*Logica"]
         LI -.implementa.- LS
     end
 
-    subgraph DATA["Acceso a Datos"]
-        DB["AppDbContext\n(EF Core + SQLite)"]
+    subgraph DATA["Acceso Datos"]
+        DB["AppDbContext"]
     end
 
     subgraph DOM["Dominio"]
-        MO["Models/*.cs"]
+        MO["Models"]
     end
 
     C -->|"recibe"| DI
@@ -159,7 +213,7 @@ flowchart LR
     SI -->|"devuelve"| DO
     C -->|"responde"| DO
 
-    SS -->|"mapea DTO → entidad"| MO
+    SS -->|"mapea"| MO
     SS -->|"delega"| LI
     LS -->|"usa"| MO
     LS -->|"accede"| DB
@@ -179,26 +233,26 @@ sequenceDiagram
     participant L as LogicaNegocio
     participant DB as AppDbContext
 
-    Cliente->>C: POST /api/tareas\n{ "titulo": "..." }
-    Note over C: [ApiController] valida ModelState automáticamente<br/>(anotaciones [Required], [MaxLength] del DTO)
+    Cliente->>C: POST /api/tareas
+    Note over C: Valida ModelState
     alt ModelState inválido
-        C-->>Cliente: 400 Bad Request\n{ "errors": { ... } }
+        C-->>Cliente: 400 Bad Request
     else ModelState válido
-        C->>S: CrearAsync(CrearTareaDto)
-        Note over S: Mapea DTO → entidad TodoItem
-        S->>L: CrearAsync(TodoItem)
-        Note over L: Valida reglas de negocio<br/>(título no vacío, sin duplicados, etc.)
-        alt Regla de negocio violada
-            L-->>S: throws InvalidOperationException
+        C->>S: CrearAsync(dto)
+        Note over S: Mapea DTO a entidad
+        S->>L: CrearAsync(entidad)
+        Note over L: Valida reglas de negocio
+        alt Regla violada
+            L-->>S: throws Exception
             S-->>C: excepción propagada
             C-->>Cliente: 400 Bad Request
-        else Todo correcto
-            L->>DB: Add(todoItem) + SaveChangesAsync()
-            DB-->>L: todoItem con Id asignado
-            L-->>S: TodoItem creado
-            Note over S: Mapea entidad → TareaDto
-            S-->>C: TareaDto
-            C-->>Cliente: 201 Created\n{ "id": 1, "titulo": "...", ... }
+        else Todo OK
+            L->>DB: Add + SaveChanges
+            DB-->>L: entidad con Id
+            L-->>S: entidad creada
+            Note over S: Mapea entidad a DTO
+            S-->>C: DTO
+            C-->>Cliente: 201 Created
         end
     end
 ```
@@ -213,11 +267,11 @@ Cada skill que genera clases registrables actualiza `Program.cs` con los registr
 flowchart TD
     PR["Program.cs"]
 
-    BD_REG["builder.Services\n.AddDbContext&lt;AppDbContext&gt;(SQLite)"]
-    LN_REG["builder.Services\n.AddScoped&lt;I*Logica, *Logica&gt;()"]
-    SV_REG["builder.Services\n.AddScoped&lt;I*Service, *Service&gt;()"]
-    CT_REG["builder.Services\n.AddControllers()"]
-    MAP["app.MapControllers()"]
+    BD_REG["AddDbContext SQLite"]
+    LN_REG["AddScoped Logica"]
+    SV_REG["AddScoped Service"]
+    CT_REG["AddControllers"]
+    MAP["MapControllers"]
 
     PR --> BD_REG
     PR --> LN_REG
@@ -241,50 +295,57 @@ flowchart TD
 
 ## 7. Cuándo usar cada skill
 
-Para la mayoría de los casos, usar directamente `nueva-feature` — detecta automáticamente qué capas necesitan cambios y ejecuta solo los pasos necesarios.
+### Desde los agentes
 
-Usa los skills individuales solo cuando necesites actuar sobre una única capa de forma aislada (p. ej. ajustar solo un DTO sin tocar nada más).
+Lo habitual es invocar **`@orquestador-democopilot <feature>`** y dejar que el ciclo completo se encargue:
+
+1. El **planificador** genera el plan en `docs/plan-<slug>.md`
+2. El **desarrollador** lee el plan y ejecuta los skills necesarios en orden
+3. El **verificador** comprueba que todo compila y cumple criterios
+4. El **orquestador** hace commit + push
+
+### Ejecución manual de skills
+
+Puedes invocar skills individuales cuando necesites actuar sobre una única capa de forma aislada (p. ej. ajustar solo un DTO sin tocar nada más), pero es menos común.
 
 ```mermaid
 flowchart TD
-    START([Nueva feature / nuevo recurso]) --> Q0{¿Afecta
-a varias capas?}
-    Q0 -->|Sí| NF["▶ Usar
-nueva-feature"]
-    Q0 -->|No| Q1{¿Existe\ndocs/analisis-diseño.md?}
-    NF --> END2([Listo])
-    style NF fill:#fdf4ff,stroke:#a21caf,stroke-width:2px
+    START([Nueva feature]) --> Q0{Afecta varias capas?}
+    Q0 -->|Sí| AG["Invocar @orquestador-democopilot"]
+    Q0 -->|No| Q1{Existe analisis-diseño?}
+    AG --> END2([Listo])
+    style AG fill:#1f6feb,color:#fff,stroke:#0b3d91,stroke-width:2px
 
-    Q1 -->|No| DA["▶ Ejecutar\ndiseño-analisis"]
-    Q1 -->|Sí| Q2{¿Existen\nlos modelos?}
+    Q1 -->|No| DA["diseño-analisis"]
+    Q1 -->|Sí| Q2{Existen modelos?}
     DA --> Q2
 
-    Q2 -->|No| MO["▶ Ejecutar\nmodelo"]
-    Q2 -->|Sí| Q3{¿Existen\nlos DTOs?}
+    Q2 -->|No| MO["modelo"]
+    Q2 -->|Sí| Q3{Existen DTOs?}
     MO --> Q3
 
-    Q3 -->|No| DTO["▶ Ejecutar\ndto"]
-    Q3 -->|Sí| Q4{¿Existe\nAppDbContext?}
+    Q3 -->|No| DTO["dto"]
+    Q3 -->|Sí| Q4{Existe AppDbContext?}
     DTO --> Q4
 
-    Q4 -->|No| BD["▶ Ejecutar\nbase-de-datos"]
-    Q4 -->|Sí| Q5{¿Existe\nlógica de negocio?}
+    Q4 -->|No| BD["base-de-datos"]
+    Q4 -->|Sí| Q5{Existe lógica negocio?}
     BD --> Q5
 
-    Q5 -->|No| LN["▶ Ejecutar\nlogica-negocio"]
-    Q5 -->|Sí| Q6{¿Tiene\nvalidaciones?}
+    Q5 -->|No| LN["logica-negocio"]
+    Q5 -->|Sí| Q6{Tiene validaciones?}
     LN --> Q6
 
-    Q6 -->|No| VA["▶ Ejecutar\nvalidaciones"]
-    Q6 -->|Sí| Q7{¿Existen\nlos servicios?}
+    Q6 -->|No| VA["validaciones"]
+    Q6 -->|Sí| Q7{Existen servicios?}
     VA --> Q7
 
-    Q7 -->|No| SV["▶ Ejecutar\nservicio"]
-    Q7 -->|Sí| Q8{¿Existen\nlos controladores?}
+    Q7 -->|No| SV["servicio"]
+    Q7 -->|Sí| Q8{Existen controladores?}
     SV --> Q8
 
-    Q8 -->|No| CT["▶ Ejecutar\ncontrolador"]
-    Q8 -->|Sí| CM["▶ Ejecutar\ncommit-message"]
+    Q8 -->|No| CT["controlador"]
+    Q8 -->|Sí| CM["commit-message"]
     CT --> CM
 
     CM --> END([Listo para commit])

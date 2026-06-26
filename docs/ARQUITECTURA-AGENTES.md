@@ -1,10 +1,8 @@
-# El equipo de agentes coordinados (en Claude Code)
+# El equipo de agentes coordinados (en GitHub Copilot)
 
-Ampliar una API a mano tiene un ritmo conocido: piensas qué hay que hacer, lo escribes, compruebas que no has roto nada y lo subes. Cuatro sombreros distintos puestos por la misma persona. Aquí cada sombrero es un agente, y tú solo das la orden de salida con `/orquestar`. El resto — el issue, la rama, el plan, el código, la verificación y el Pull Request — pasa solo.
+Ampliar una API a mano tiene un ritmo conocido: piensas qué hay que hacer, lo escribes, compruebas que no has roto nada y lo subes. Cuatro sombreros distintos puestos por la misma persona. Aquí cada sombrero es un agente, y tú solo das la orden de salida con `@orquestador-democopilot`. El resto — el plan, el código, la verificación y el commit — pasa solo.
 
 Este documento cuenta cómo está montado por dentro y por qué se tomó cada decisión.
-
-> ¿Vienes de la versión con GitHub Copilot? Está en [`../MANUAL.md`](../MANUAL.md). Esto es la adaptación a **Claude Code**, que no es un copia-pega — hay una diferencia de arquitectura que lo cambia todo, y la cuento en la sección 2.
 
 ---
 
@@ -14,121 +12,97 @@ Tú hablas con uno solo. Ese uno reparte.
 
 ```mermaid
 flowchart LR
-    U([👤 Usuario]) -->|/orquestar funcionalidad| O[🧭 Orquestador<br/>comando, hilo principal]
-    O -->|Agent| A[🔎 Analista<br/>subagente]
-    O -->|Agent| D[⚙️ Desarrollador<br/>subagente]
-    O -->|Agent| V[✅ Verificador<br/>subagente]
-    O -->|gh / git| GH[(🐙 GitHub<br/>issue · rama · PR)]
+    U([👤 Usuario]) -->|@orquestador funcionalidad| O[🧭 Orquestador<br/>agente coordinador]
+    O -->|agent| P[🔎 Planificador<br/>subagente]
+    O -->|agent| D[⚙️ Desarrollador<br/>subagente]
+    O -->|agent| V[✅ Verificador<br/>subagente]
+    O -->|git| GH[(🐙 Git<br/>commit + push)]
 
-    A -.escribe.-> P[/docs/plan-*.md/]
-    D -.edita.-> C[/src/ListaTareas.Api/*.cs/]
+    P -.escribe.-> PL[/docs/plan-*.md/]
+    D -.edita.-> C[/*.cs/]
     V -.lee + dotnet build.-> C
 
     classDef orq fill:#1f6feb,color:#fff,stroke:#0b3d91;
     classDef sub fill:#238636,color:#fff,stroke:#0b3d91;
     classDef ext fill:#6e40c9,color:#fff,stroke:#0b3d91;
     class O orq;
-    class A,D,V sub;
+    class P,D,V sub;
     class GH ext;
 ```
 
-El orquestador es el único que toca GitHub. Los tres especialistas ni se enteran de que existe un issue o un PR: lo suyo es leer, planear, escribir código y dar un veredicto. Esa separación es a propósito, y enseguida verás por qué importa.
+El orquestador es el único que toca Git. Los tres especialistas ni se enteran de que se va a hacer commit: lo suyo es leer, planear, escribir código y dar un veredicto. Esa separación es a propósito, y enseguida verás por qué importa.
 
 ---
 
-## 2. Por qué el orquestador NO es un subagente
+## 2. Quién hace qué
 
-Aquí está la trampa, y es la duda que tendrías al venir de Copilot: «si en Copilot el orquestador era un agente que llamaba a otros agentes, ¿por qué aquí no?».
-
-Porque en Claude Code los subagentes corren aislados. Cada uno tiene su propia ventana de contexto, hace su tarea y devuelve un resultado — pero **no puede invocar a otro subagente**. Es como un especialista metido en una sala insonorizada: trabaja de maravilla, pero no puede llamar por teléfono a la sala de al lado.
-
-¿Quién sí puede llamar a las salas? El hilo principal. El que tiene el teléfono.
-
-Por eso el orquestador no es un subagente más, sino un **comando** (`/orquestar`) que se ejecuta en ese hilo principal. Desde ahí sí tiene la herramienta `Agent` para ir llamando al analista, al desarrollador y al verificador uno tras otro. Si lo hubiéramos dejado como subagente, se quedaría mirando el techo de su sala insonorizada sin poder coordinar a nadie.
-
-La consecuencia práctica es la tabla de la sección siguiente: el coordinador gestiona git y GitHub; los especialistas solo tocan su parcela.
-
----
-
-## 3. Quién hace qué
-
-| Rol | Qué es en Claude Code | ¿Toca código? | Herramientas | Lo que deja |
+| Rol | Qué es en GitHub Copilot | ¿Toca código? | Herramientas | Lo que deja |
 |-----|---------------------|---------------|--------------|------------|
-| **Orquestador** | Comando `/orquestar` | No | `Agent, Bash, Read, Grep, Glob` | Issue + PR + resumen |
-| **Analista** | Subagente | Solo el plan `.md` | `Read, Grep, Glob, Write, Edit` | `docs/plan-<slug>.md` |
-| **Desarrollador** | Subagente | Sí | `Read, Grep, Glob, Write, Edit, Bash` | Código que compila |
-| **Verificador** | Subagente | No | `Read, Grep, Glob, Bash` | Veredicto APROBADO / REVISAR |
+| **Orquestador** | Agente `@orquestador-democopilot` | No | `agent, execute, read, search` | Commit + resumen |
+| **Planificador** | Agente `@planificador-democopilot` | Solo el plan `.md` | `read, search, edit` | `docs/plan-<slug>.md` |
+| **Desarrollador** | Agente `@desarrollador-democopilot` | Sí | `read, search, edit, execute` | Código que compila |
+| **Verificador** | Agente `@verificador-democopilot` | No | `read, search, execute` | Veredicto APROBADO / REVISAR |
 
-Fíjate en una cosa: el analista y el verificador **no escriben código de producción**. El analista solo deja un `.md`; el verificador solo lee y compila. Es la versión software del principio de que quien diseña el examen no debería ser quien lo aprueba. El que verifica no arregla — señala. Y el que arregla es siempre el desarrollador.
+Fíjate en una cosa: el planificador y el verificador **no escriben código de producción**. El planificador solo deja un `.md`; el verificador solo lee y compila. Es la versión software del principio de que quien diseña el examen no debería ser quien lo aprueba. El que verifica no arregla — señala. Y el que arregla es siempre el desarrollador.
 
 ---
 
-## 4. El ciclo completo, paso a paso
+## 3. El ciclo completo, paso a paso
 
-Esto es lo que ocurre desde que escribes `/orquestar` hasta que tienes un PR esperando revisión. Incluye GitHub de punta a punta.
+Esto es lo que ocurre desde que invocas `@orquestador-democopilot` hasta que tienes el código commiteado en main.
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor U as 👤 Usuario
     participant O as 🧭 Orquestador
-    participant GH as 🐙 GitHub (gh/git)
-    participant A as 🔎 Analista
+    participant P as 🔎 Planificador
     participant D as ⚙️ Desarrollador
     participant V as ✅ Verificador
+    participant G as 🐙 Git
 
-    U->>O: /orquestar "filtrar por estado"
-    O->>GH: gh issue create
-    GH-->>O: issue #N
-    O->>GH: git switch -c feature/filtro-estado
+    U->>O: @orquestador "filtrar por estado"
 
-    O->>A: Agent(analista, requisito)
-    A-->>O: docs/plan-filtro-estado.md
+    O->>P: agent(planificador, requisito)
+    P-->>O: docs/plan-filtro-estado.md
 
-    O->>D: Agent(desarrollador, ruta del plan)
+    O->>D: agent(desarrollador, ruta del plan)
     D-->>O: código + dotnet build OK
 
     loop Hasta APROBADO (máx. 3)
-        O->>V: Agent(verificador, plan)
+        O->>V: agent(verificador, plan)
         alt REVISAR
             V-->>O: problemas concretos
-            O->>D: Agent(desarrollador, informe)
+            O->>D: agent(desarrollador, informe)
             D-->>O: correcciones
         else APROBADO
             V-->>O: ✅ APROBADO
         end
     end
 
-    O->>GH: git commit (closes #N) + push
-    O->>GH: gh pr create --base main
-    GH-->>O: URL del PR
-    O-->>U: Resumen: issue, PR, ficheros, veredicto
+    O->>G: git add + commit + push
+    O-->>U: Resumen: plan, ficheros, iteraciones, veredicto
 ```
 
-El detalle que más se agradece: el commit lleva `closes #N`. Eso significa que cuando alguien fusione el PR, GitHub cierra el issue solo. No tienes que acordarte de nada. La trazabilidad — qué se pidió, qué se planeó, qué se cambió — queda cosida sin esfuerzo.
+El flujo es deliberadamente simple: no crea issues ni PRs automáticamente. El commit va directo a `main` (o la rama en la que estés). La trazabilidad queda en el plan `.md` y en el historial de Git.
 
-### Los 8 pasos en texto (por si el diagrama no te renderiza)
+### Los 5 pasos en texto (por si el diagrama no te renderiza)
 
-Si tu visor no pinta el diagrama de arriba, aquí tienes lo mismo en plano. Cada paso, con el comando real que lanza el orquestador:
+Si tu visor no pinta el diagrama de arriba, aquí tienes lo mismo en plano. Cada paso, con la acción real que ejecuta cada agente:
 
-| # | Paso | Quién | Comando / acción |
-|---|------|-------|------------------|
-| 1 | **Crear el issue** | Orquestador | `gh issue create --title … --body …` → guarda el `#N` |
-| 2 | **Crear la rama** | Orquestador | `git switch main` → `git pull --ff-only` → `git switch -c feature/<slug>` |
-| 3 | **Planificar** | Analista | escribe `docs/plan-<slug>.md` y devuelve su ruta |
-| 4 | **Implementar** | Desarrollador | edita el código según el plan + `dotnet build` |
-| 5 | **Verificar** | Verificador | `dotnet build` + criterios → `APROBADO` / `REVISAR` (bucle, máx. 3) |
-| 6 | **Commit + push** | Orquestador | `git commit -m "feat: … (closes #N)"` → `git push -u origin feature/<slug>` |
-| 7 | **Abrir el PR** | Orquestador | `gh pr create --base main --head feature/<slug> --body "Closes #N …"` |
-| 8 | **Resumen** | Orquestador | enlaces del **issue** y del **PR**, ficheros y veredicto |
+| # | Paso | Quién | Acción |
+|---|------|-------|--------|
+| 1 | **Planificar** | Planificador | escribe `docs/plan-<slug>.md` y devuelve su ruta |
+| 2 | **Implementar** | Desarrollador | edita el código según el plan + `dotnet build` |
+| 3 | **Verificar** | Verificador | `dotnet build` + criterios → `APROBADO` / `REVISAR` (bucle, máx. 3) |
+| 4 | **Commit + push** | Orquestador | `git add .` → `git commit -m "feat: …"` → `git push` |
+| 5 | **Resumen** | Orquestador | plan, ficheros modificados, iteraciones y veredicto |
 
-Las tres acciones de GitHub — **issue** (paso 1), **rama** (paso 2) y **Pull Request** (paso 7) — las hace siempre el orquestador con `gh`/`git`. Los subagentes no tocan nada de eso.
-
-> **Ejemplo real ya ejecutado:** issue [#1](https://github.com/hispafox/AgentesCoordinados/issues/1) → rama `feature/filtro-estado` → PR [#2](https://github.com/hispafox/AgentesCoordinados/pull/2).
+La única acción de Git — **commit + push** (paso 4) — la hace siempre el orquestador con `git`. Los subagentes no tocan nada de eso.
 
 ---
 
-## 5. El bucle de verificación (donde está la gracia)
+## 4. El bucle de verificación (donde está la gracia)
 
 Un control de calidad que solo aprueba o suspende sirve de poco. Este devuelve el trabajo con la lista de qué falla, y el desarrollador vuelve a entrar. Hasta tres vueltas.
 
@@ -139,134 +113,131 @@ flowchart TD
     BUILD -->|❌ falla| REV[Veredicto: REVISAR<br/>lista de problemas]
     REV --> CHECK{¿iteración < 3?}
     CHECK -->|Sí| FIX[Desarrollador corrige] --> BUILD
-    CHECK -->|No| STOP[⛔ Detener<br/>no abrir PR<br/>reportar pendientes]
-    OK --> PR[Commit + push + PR]
+    CHECK -->|No| STOP[⛔ Detener<br/>sin commit<br/>reportar pendientes]
+    OK --> COMMIT[Commit + push]
 
     classDef good fill:#238636,color:#fff;
     classDef bad fill:#da3633,color:#fff;
-    class OK,PR good;
+    class OK,COMMIT good;
     class STOP,REV bad;
 ```
 
-¿Y por qué tres y no infinitas? Porque un bucle sin tope es la receta para que un malentendido entre el plan y la implementación te queme la tarde dando vueltas. Si tras tres intentos el verificador sigue diciendo REVISAR, el orquestador **para y no abre el PR**. Deja la rama y el issue como están, te cuenta qué quedó pendiente, y decides tú. Mejor un freno honesto que un Pull Request roto con tu nombre.
+¿Y por qué tres y no infinitas? Porque un bucle sin tope es la receta para que un malentendido entre el plan y la implementación te queme la tarde dando vueltas. Si tras tres intentos el verificador sigue diciendo REVISAR, el orquestador **para y no hace commit**. Deja el código sin commitear, te cuenta qué quedó pendiente, y decides tú. Mejor un freno honesto que un commit roto con tu nombre.
 
 ---
 
-## 6. La vida de una funcionalidad, como estados
+## 5. La vida de una funcionalidad, como estados
 
 Si prefieres verlo como una máquina de estados — de dónde sale, a dónde puede ir cada paso:
 
 ```mermaid
 stateDiagram-v2
-    [*] --> IssueCreado: gh issue create
-    IssueCreado --> RamaCreada: git switch -c
-    RamaCreada --> Planificado: analista
+    [*] --> Planificado: planificador
     Planificado --> Implementado: desarrollador
     Implementado --> EnRevision: verificador
     EnRevision --> Implementado: REVISAR (iter < 3)
     EnRevision --> Aprobado: APROBADO
     EnRevision --> Bloqueado: 3 iteraciones sin éxito
-    Aprobado --> PRAbierto: commit + push + PR
-    PRAbierto --> [*]: merge (cierra issue)
+    Aprobado --> Commiteado: commit + push
+    Commiteado --> [*]: completado
     Bloqueado --> [*]: reporte de pendientes
 ```
 
-Hay dos salidas, no una. La feliz (PR fusionado, issue cerrado) y la honesta (bloqueado, con el parte de lo que falta). Las dos son finales válidos.
+Hay dos salidas, no una. La feliz (commiteado y pusheado) y la honesta (bloqueado, con el parte de lo que falta). Las dos son finales válidos.
 
 ---
 
-## 7. Lo que pasa en Git
+## 6. Lo que pasa en Git
 
-Todo el trabajo vive en una rama `feature/<slug>`. `main` no se toca hasta que el PR se fusiona.
+El trabajo se commitea directamente en la rama en la que estés (normalmente `main`). No crea branches automáticamente.
 
 ```mermaid
 gitGraph
-    commit id: "main inicial"
-    branch feature/filtro-estado
-    checkout feature/filtro-estado
-    commit id: "plan + impl"
-    commit id: "correcciones tras REVISAR"
-    checkout main
-    merge feature/filtro-estado tag: "PR #N merged"
-    commit id: "issue #N cerrado"
+    commit id: "estado inicial"
+    commit id: "feat: filtro por estado" tag: "orquestador"
+    commit id: "siguiente feature"
 ```
 
 ---
 
-## 8. Dónde está cada cosa
+## 7. Dónde está cada cosa
 
 ```mermaid
 flowchart TD
-    ROOT[AgentesCoordinados/]
-    ROOT --> CLAUDE[CLAUDE.md<br/>convenciones del repo]
-    ROOT --> DOTC[.claude/]
-    ROOT --> DOTG[.github/<br/>agentes Copilot originales]
-    ROOT --> SRC[src/ListaTareas.Api/]
+    ROOT[DemoCopilot/]
+    ROOT --> DOTG[.github/]
+    ROOT --> SRC[*.cs]
     ROOT --> DOCS[docs/]
 
-    DOTC --> AG[agents/]
-    DOTC --> CMD[commands/]
-    AG --> A1[analista.md]
-    AG --> A2[desarrollador.md]
-    AG --> A3[verificador.md]
-    CMD --> C1[orquestar.md]
+    DOTG --> AG[agents/]
+    DOTG --> SK[skills/]
+    DOTG --> CI[copilot-instructions.md]
+    AG --> A1[planificador-democopilot.agent.md]
+    AG --> A2[desarrollador-democopilot.agent.md]
+    AG --> A3[verificador-democopilot.agent.md]
+    AG --> A4[orquestador-democopilot.agent.md]
 
-    SRC --> PG[Program.cs<br/>endpoints /tareas]
-    SRC --> TA[Tarea.cs<br/>modelo + AlmacenTareas]
-    SRC --> HT[ListaTareas.Api.http]
+    SRC --> M[Models/]
+    SRC --> D[Dtos/]
+    SRC --> L[LogicaNegocio/]
+    SRC --> S[Services/]
+    SRC --> C[Controllers/]
 
-    DOCS --> PL[plan-*.md<br/>generados por el analista]
+    DOCS --> PL[plan-*.md<br/>generados por el planificador]
+    DOCS --> AD[analisis-diseño.md]
 ```
 
-Los agentes de Copilot siguen en `.github/agents/` intactos. No estorban — sirven para Copilot. Esto es la versión paralela para Claude Code, no un reemplazo.
+Todo vive en `.github/` — agentes, skills y convenciones. El orquestador y los tres especialistas están en `.github/agents/`.
 
 ---
 
-## 9. De Copilot a Claude Code: el diccionario
+## 8. Nombres y herramientas
 
-La adaptación es sobre todo dos cosas: traducir el vocabulario de herramientas y mover el orquestador de subagente a comando (lo de la sección 2).
+Los agentes de GitHub Copilot tienen nombres completos y herramientas específicas:
 
-| Concepto en Copilot (`.github/agents/`) | Equivalente en Claude Code | Nota |
-|---|---|---|
-| `orquestador.agent.md` (tool `agent` + `agents:`) | `/orquestar` (comando) | Un subagente no puede coordinar a otros → al hilo principal |
-| `analista.agent.md` | `.claude/agents/analista.md` | Subagente |
-| `desarrollador.agent.md` | `.claude/agents/desarrollador.md` | Subagente |
-| `verificador.agent.md` | `.claude/agents/verificador.md` | Subagente |
-| `copilot-instructions.md` | `CLAUDE.md` | Contexto compartido por todos |
-| tool `read` | `Read` | |
-| tool `search` | `Grep`, `Glob` | |
-| tool `edit` | `Write`, `Edit` | |
-| tool `execute` | `Bash` | `dotnet build`, `git`, `gh` |
-| tool `agent` | `Agent` | Solo en el hilo principal / comando |
+| Agente | Nombre completo | Herramientas |
+|--------|----------------|-------------|
+| **Orquestador** | `@orquestador-democopilot` | `agent`, `execute`, `read`, `search` |
+| **Planificador** | `@planificador-democopilot` | `read`, `search`, `edit` |
+| **Desarrollador** | `@desarrollador-democopilot` | `read`, `search`, `edit`, `execute` |
+| **Verificador** | `@verificador-democopilot` | `read`, `search`, `execute` |
+
+Todas las convenciones del proyecto están en `.github/copilot-instructions.md`, que GitHub Copilot carga automáticamente.
 
 ---
 
-## 10. Cómo se usa
+## 9. Cómo se usa
 
-Tres cosas tienen que estar en su sitio antes de empezar: el **SDK de .NET 10** (compruébalo con `dotnet --version`), el **GitHub CLI** autenticado (`gh auth status`), y Claude Code abierto en la **raíz** del repo — esa que contiene la carpeta `.claude/`. Si abres una subcarpeta, no encontrará ni el comando ni los subagentes.
+Dos cosas tienen que estar en su sitio antes de empezar: el **SDK de .NET 10** (compruébalo con `dotnet --version`) y **GitHub Copilot** habilitado en VS Code.
 
 Con eso, lanzar el ciclo entero es una línea:
 
 ```text
-/orquestar filtrar tareas por estado (completadas / pendientes)
+@orquestador-democopilot filtrar tareas por estado (completadas / pendientes)
 ```
 
-Y a partir de ahí no tienes que tocar nada: issue, rama, plan, código, verificación, commit y PR. Al final te quedan los dos enlaces que importan — el del issue y el del PR.
+Y a partir de ahí no tienes que tocar nada: plan, código, verificación y commit. Al final te queda el resumen con los ficheros modificados y el veredicto.
 
-¿Quieres usar un rol suelto, sin todo el ciclo? También vale. Pídelo en cristiano: *«usa el subagente analista para planear la paginación de `/tareas`»*. Claude tirará solo de ese.
+¿Quieres usar un agente suelto, sin todo el ciclo? También vale:
 
-> Un aviso que ahorra disgustos: los subagentes y comandos se cargan **al arrancar Claude Code**. Si acabas de crearlos o tocarlos, reinicia la sesión o no aparecerán.
+```text
+@planificador-democopilot planea la paginación de /tareas
+@desarrollador-democopilot implementa docs/plan-paginacion.md
+@verificador-democopilot verifica docs/plan-paginacion.md
+```
+
+> Un aviso que ahorra disgustos: los agentes se cargan **al arrancar VS Code**. Si acabas de crear o modificar un `.agent.md`, reinicia VS Code o no aparecerán.
 
 ---
 
-## 11. Cuando algo no va
+## 10. Cuando algo no va
 
 | Lo que ves | Lo que suele ser | Qué hacer |
 |---|---|---|
-| `/orquestar` no aparece | Arrancaste la sesión antes de crear el comando | Reinicia Claude Code |
-| «No encuentro el subagente» | El `name` del frontmatter no coincide | Tiene que ser exactamente `analista` / `desarrollador` / `verificador` |
-| `gh: command not found` | GitHub CLI sin instalar o fuera del PATH | `winget install GitHub.cli` y abre una terminal nueva |
-| No se crea el PR | El verificador nunca llegó a APROBADO | Mira los problemas que reportó, corrígelos y reintenta |
-| El build peta por OpenApi | La versión del paquete no casa con tu SDK | Ajusta `Microsoft.AspNetCore.OpenApi` en el `.csproj` |
+| `@orquestador-democopilot` no aparece | Arrancaste VS Code antes de crear el agente | Reinicia VS Code |
+| «No encuentro el agente» | El `name` del frontmatter no coincide con la invocación | Tiene que ser exactamente `orquestador-democopilot` / `planificador-democopilot` / etc. |
+| No se hace commit | El verificador nunca llegó a APROBADO (3 iteraciones) | Mira los problemas que reportó, corrígelos manualmente |
+| El build peta | Error de compilación en el código generado | Lee el error, pasa el mensaje al desarrollador para que corrija |
+| Git rechaza el push | No tienes permisos o la rama está protegida | Verifica tus credenciales y permisos del repo |
 
-Y si nada de esto encaja con tu síntoma, el primer movimiento casi siempre es el mismo: reinicia la sesión y vuelve a probar con un requisito pequeño. La mitad de los problemas de configuración se evaporan ahí.
+Y si nada de esto encaja con tu síntoma, el primer movimiento casi siempre es el mismo: reinicia VS Code y vuelve a probar con un requisito pequeño. La mitad de los problemas de configuración se evaporan ahí.

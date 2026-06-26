@@ -77,6 +77,7 @@ dotnet ef database update
 | `controlador` | Crear o actualizar `Controllers/` |
 | `ui-ux-pro-max` | **Consultar ANTES de implementar frontend.** Catálogo de patrones de diseño UI/UX, heurísticas de usabilidad y mejores prácticas. Úsalo para validar diseño de componentes, flujos de usuario, accesibilidad y experiencia antes de escribir código React. |
 | `frontend-react` | Crear o actualizar el frontend React + Vite + TypeScript en `frontend/` |
+| `actualizar-documentacion` | **Sincronizar docs con código.** Mantiene actualizada la documentación técnica (`ARQUITECTURA-AGENTES.md`, `skills-orquestacion.md`) cuando cambien agentes, skills o arquitectura. Corrige diagramas Mermaid problemáticos. |
 | `commit-message` | Generar el mensaje de commit |
 | `estimacion-proyecto` | Generar `docs/insights-proyecto.xlsx` con estimaciones de esfuerzo, comparativa con/sin Copilot, modelo de datos y endpoints |
 
