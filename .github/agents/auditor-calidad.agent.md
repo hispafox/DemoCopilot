@@ -541,6 +541,96 @@ Después de guardar, informa al usuario:
 
 ---
 
+## Paso adicional: crear issues de GitHub para cada hallazgo
+
+**IMPORTANTE:** Este paso solo se ejecuta si el MCP de GitHub está disponible. Si no está configurado, se omite silenciosamente sin error.
+
+### Verificar disponibilidad del MCP de GitHub
+
+Intenta ejecutar:
+
+```bash
+git remote -v | grep github.com
+```
+
+Si no hay remote de GitHub, **salta este paso** y avisa al usuario:
+
+> ℹ️ No se detectó repositorio GitHub o MCP no configurado. Issues no generados.
+
+Si hay remote de GitHub, extrae `owner` y `repo` de la URL.
+
+### Crear un issue por cada hallazgo
+
+Para cada hallazgo del informe (crítico, alto, medio, bajo), crea un issue usando la herramienta `mcp_github_mcp_se_issue_write` con:
+
+**Parámetros del issue:**
+
+- `method`: `"create"`
+- `owner`: extraído del remote (ej: `hispafox`)
+- `repo`: extraído del remote (ej: `DemoCopilot`)
+- `title`: `"[SEVERIDAD] Categoría — Título breve del hallazgo"` 
+  - Ejemplo: `"[CRÍTICO] Arquitectura — Controlador accede directamente a DbContext"`
+- `body`: Markdown completo del hallazgo con:
+  ```markdown
+  ## 🔴/🟠/🟡/🔵 [SEVERIDAD] — Categoría — Título
+  
+  **Fichero:** `ruta/fichero.cs` (línea X)
+  
+  ### Descripción
+  [Descripción completa del problema]
+  
+  ### Riesgo
+  [Por qué es grave o qué impacto tiene]
+  
+  ### Acción requerida
+  [Qué debe hacerse para corregirlo]
+  
+  ### Contexto de auditoría
+  - **Fecha de auditoría:** [fecha]
+  - **Alcance:** [capas auditadas]
+  - **Veredicto global:** [APROBADO/OBSERVACIONES/RECHAZADO]
+  - **Informe completo:** `docs/auditoria-YYYY-MM-DD.md`
+  
+  ### Skill responsable (si aplica)
+  [Si se identificó qué skill generó el código problemático, incluirlo aquí]
+  ```
+- `labels`: Array de etiquetas según severidad:
+  - 🔴 Crítico: `["bug", "critical", "quality", "auditoria"]`
+  - 🟠 Alto: `["bug", "high-priority", "quality", "auditoria"]`
+  - 🟡 Medio: `["enhancement", "quality", "auditoria"]`
+  - 🔵 Bajo: `["tech-debt", "quality", "auditoria"]`
+
+**Ejemplo de llamada:**
+
+```json
+{
+  "method": "create",
+  "owner": "hispafox",
+  "repo": "DemoCopilot",
+  "title": "[CRÍTICO] Arquitectura — Controlador accede directamente a DbContext",
+  "body": "## 🔴 [CRÍTICO] — Arquitectura — Controlador accede directamente a DbContext\n\n**Fichero:** `Controllers/TareasController.cs` (línea 15)...",
+  "labels": ["bug", "critical", "quality", "auditoria"]
+}
+```
+
+### Manejo de errores
+
+Si la creación de issues falla:
+- **NO detener la auditoría**
+- **NO mostrar error al usuario**
+- Simplemente registrar en el informe al final:
+
+> ⚠️ Algunos issues no pudieron crearse automáticamente. Revisa el informe para detalles completos.
+
+### Resumen final
+
+Después de crear todos los issues exitosamente, actualizar el mensaje final:
+
+> ✅ Informe guardado en `docs/auditoria-YYYY-MM-DD.md`  
+> ✅ Creados N issues en GitHub con etiqueta `auditoria`
+
+---
+
 ## Notas finales del rol
 
 - Si no encuentras ningún problema real, **dilo explícitamente** en el informe con evidencia de los checks que pasaron. Un informe de auditoría limpio es valioso solo si se documenta qué se verificó.

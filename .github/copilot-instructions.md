@@ -88,7 +88,7 @@ dotnet ef database update
 | `@planificador-democopilot` | Planificar una feature nueva, generar `docs/plan-*.md` |
 | `@desarrollador-democopilot` | Implementar un plan de `docs/plan-*.md` capa a capa |
 | `@verificador-democopilot` | Verificar que la implementación de un plan es correcta |
-| `@auditor-calidad` | **Auditoría completa de calidad:** code smells, deuda técnica, SOLID, seguridad, convenciones. Modo abogado del diablo. |
+| `@auditor-calidad` | **Auditoría completa de calidad:** code smells, deuda técnica, SOLID, seguridad, convenciones. Genera informe markdown + issues de GitHub (si MCP configurado). Modo abogado del diablo. |
 | `@documentador-usuario` | **Generar y actualizar documentación de usuario** en docx, pdf o markdown. Analiza el proyecto, detecta cambios, documenta funcionalidades con lenguaje claro y placeholders para capturas. |
 
 ## Reglas para la demo

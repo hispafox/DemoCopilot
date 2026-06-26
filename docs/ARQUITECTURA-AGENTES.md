@@ -42,7 +42,7 @@ El orquestador es el único que toca Git. Los tres especialistas ni se enteran d
 | **Planificador** | Agente `@planificador-democopilot` | Solo el plan `.md` | `read, search, edit` | `docs/plan-<slug>.md` |
 | **Desarrollador** | Agente `@desarrollador-democopilot` | Sí | `read, search, edit, execute` | Código que compila |
 | **Verificador** | Agente `@verificador-democopilot` | No | `read, search, execute` | Veredicto APROBADO / REVISAR |
-| **Auditor de calidad** | Agente `@auditor-calidad` | No | `read, search` | Informe con hallazgos priorizados |
+| **Auditor de calidad** | Agente `@auditor-calidad` | No | `read, search, github` | Informe + issues de GitHub (si MCP configurado) |
 | **Documentador de usuario** | Agente `@documentador-usuario` | No | `read, search, edit, terminal` | Manual de usuario (.md/.docx/.pdf) |
 
 Fíjate en una cosa: el planificador y el verificador **no escriben código de producción**. El planificador solo deja un `.md`; el verificador solo lee y compila. Es la versión software del principio de que quien diseña el examen no debería ser quien lo aprueba. El que verifica no arregla — señala. Y el que arregla es siempre el desarrollador.
@@ -149,6 +149,54 @@ Hay dos salidas, no una. La feliz (commiteado y pusheado) y la honesta (bloquead
 
 ---
 
+## 5.5. El auditor de calidad — vigilancia más allá del flujo normal
+
+El `@auditor-calidad` está **fuera del ciclo de desarrollo normal**. No lo llama el orquestador. Lo llamas tú cuando quieres una auditoría exhaustiva: code smells, deuda técnica, violaciones SOLID, problemas de arquitectura de capas, seguridad OWASP, patrones N+1 en EF Core, uso incorrecto de async/await, y más.
+
+### Qué hace
+
+1. **Compila el proyecto** — si falla, veredicto automático: RECHAZADO
+2. **Ejecuta tests** — anota cuántos pasan/fallan
+3. **Audita arquitectura de capas** — verifica que Controllers → Services → LogicaNegocio → DbContext
+4. **Busca code smells** — métodos largos, clases God, duplicación, nomenclatura inconsistente
+5. **Analiza async/await** — detecta `.Result`, `.Wait()`, `async void`, fire-and-forget
+6. **Revisa EF Core** — N+1 queries, falta de `AsNoTracking()`, `SaveChangesAsync()` repetido
+7. **Auditoría de seguridad OWASP** — injection, credenciales en código, endpoints sin `[Authorize]`
+8. **Correlaciona con skills** — si encuentra `docs/plan-*.md`, identifica qué skill generó cada fichero con problemas
+9. **Detecta patrones sistemáticos** — si el mismo problema aparece en múltiples ficheros del mismo skill, propone mejoras al skill
+
+### Qué deja
+
+- **Informe en markdown:** `docs/auditoria-YYYY-MM-DD.md` con hallazgos priorizados por severidad (🔴 crítico, 🟠 alto, 🟡 medio, 🔵 bajo)
+- **Issues de GitHub (opcional):** si el MCP de GitHub está configurado, crea automáticamente un issue por cada hallazgo con:
+  - Título: `[SEVERIDAD] Categoría — Descripción breve`
+  - Cuerpo: documentación completa del hallazgo (descripción, riesgo, acción requerida, skill responsable)
+  - Etiquetas según severidad: `["bug", "critical"]` para críticos, `["enhancement", "quality"]` para medios, etc.
+  - Si el MCP no está configurado, simplemente omite la creación de issues sin error
+
+### Modo "abogado del diablo"
+
+El auditor **busca problemas, no los justifica**. Su trabajo es ser despiadado. Si hay un problema, lo reporta aunque sea menor. La carga de la prueba es del código, no del auditor.
+
+### Cuándo usarlo
+
+- Antes de releases o entregas importantes
+- Después de implementar varias features sin auditoría
+- Cuando sospechas deuda técnica acumulada
+- Para validar que los skills generan código de calidad consistente
+
+**Ejemplo de invocación:**
+
+```
+@auditor-calidad Controllers/
+@auditor-calidad Services/TareasService.cs
+@auditor-calidad
+```
+
+Sin argumento, audita toda la aplicación.
+
+---
+
 ## 6. Lo que pasa en Git
 
 El trabajo se commitea directamente en la rama en la que estés (normalmente `main`). No crea branches automáticamente.
@@ -206,7 +254,7 @@ Los agentes de GitHub Copilot tienen nombres completos y herramientas específic
 | **Planificador** | `@planificador-democopilot` | `read`, `search`, `edit` |
 | **Desarrollador** | `@desarrollador-democopilot` | `read`, `search`, `edit`, `execute` |
 | **Verificador** | `@verificador-democopilot` | `read`, `search`, `execute` |
-| **Auditor de calidad** | `@auditor-calidad` | `read`, `search` |
+| **Auditor de calidad** | `@auditor-calidad` | `read`, `search`, `github` (MCP) |
 | **Documentador de usuario** | `@documentador-usuario` | `read`, `search`, `edit`, `terminal` |
 
 Todas las convenciones del proyecto están en `.github/copilot-instructions.md`, que GitHub Copilot carga automáticamente.
