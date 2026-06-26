@@ -107,6 +107,14 @@ Ejecutar el skill [`logica-negocio`](../logica-negocio/SKILL.md):
 - Si son operaciones nuevas en entidad existente: añadir los métodos a la interfaz y la implementación existentes.
 - Recordar: la lógica trabaja con entidades de dominio, nunca con DTOs.
 
+**Checklist de validaciones obligatorias en lógica:**
+
+- [ ] **Integridad referencial en `EliminarAsync`**: Si la entidad tiene relaciones 1:N (otras entidades tienen FK apuntando a ella), validar con `.AnyAsync()` que no existan registros dependientes antes de eliminar. Lanzar `InvalidOperationException` si existen.
+- [ ] **Validación de existencia en métodos con `id`**: Todos los métodos que reciben un `id` (`ActualizarAsync`, `EliminarAsync`, métodos de acción) deben verificar con `FindAsync` que el recurso existe.
+- [ ] **Validación de FKs en `CrearAsync` / `ActualizarAsync`**: Si la entidad tiene FKs opcionales, validar con `.AnyAsync()` que el recurso referenciado existe antes de persistir.
+
+Ver el skill [`logica-negocio`](../logica-negocio/SKILL.md) Paso 3.5 para el patrón completo.
+
 ---
 
 ### Paso 6 — Validaciones
@@ -115,6 +123,12 @@ Ejecutar el skill [`validaciones`](../validaciones/SKILL.md):
 
 - En los DTOs de entrada (`Crear*Dto`, `Actualizar*Dto`): añadir `[Required]`, `[MaxLength]`, `[Range]` y demás anotaciones según las restricciones definidas en la sección 4 del análisis.
 - En la lógica de negocio: añadir comprobaciones de existencia de recursos referenciados (p. ej. si `UsuarioAsignadoId` viene en el DTO, verificar que ese usuario existe antes de guardar).
+
+**Importante:** El Paso 6 complementa el Paso 5. Si en el Paso 5 ya se implementaron las validaciones del checklist, este paso se enfoca en:
+- Anotaciones de validación en DTOs
+- Reglas de negocio específicas del análisis (duplicados, transiciones de estado, etc.)
+
+Ver el skill [`validaciones`](../validaciones/SKILL.md) Paso 3.5 para validaciones de integridad referencial.
 
 ---
 

@@ -57,6 +57,72 @@ Por cada recurso de la sección 5, derivar los métodos de lógica de negocio a 
 | `DELETE /api/<recurso>/{id}` | `EliminarAsync(int id)` |
 | `POST /api/<recurso>/{id}/<accion>` | `<Accion>Async(int id)` |
 
+### Paso 3.5 — Validaciones de Integridad Referencial (OBLIGATORIAS)
+
+**ANTES de generar el código**, identificar si el recurso a crear tiene **relaciones con otras entidades** (es decir, si otras entidades tienen una FK apuntando a este recurso).
+
+Para cada relación identificada, **añadir validación de integridad referencial en `EliminarAsync`** siguiendo este patrón:
+
+```csharp
+public async Task<bool> EliminarAsync(int id)
+{
+    var existente = await _contexto.<Recurso>s.FindAsync(id);
+    if (existente is null)
+        return false;
+
+    // ✅ OBLIGATORIO: Validar si existen registros relacionados antes de eliminar
+    var tieneRelacionados = await _contexto.<EntidadRelacionada>s
+        .AnyAsync(e => e.<RecursoId> == id);
+
+    if (tieneRelacionados)
+        throw new InvalidOperationException(
+            $"No se puede eliminar el {nombreRecurso} con Id {id} porque tiene {nombreRelacionados} asociados.");
+
+    _contexto.<Recurso>s.Remove(existente);
+    await _contexto.SaveChangesAsync();
+    return true;
+}
+```
+
+#### Cuándo aplicar esta validación:
+
+- ✅ **SIEMPRE** que una entidad tenga relaciones 1:N (un recurso puede tener muchos registros relacionados)
+- ✅ **SIEMPRE** que otra entidad tenga una FK apuntando a este recurso
+- ✅ Aunque el análisis-diseño no lo mencione explícitamente
+- ✅ Aunque la FK sea nullable (mejor prevenir que eliminar registros referenciados)
+
+#### Ejemplo real del proyecto:
+
+```csharp
+// En CategoriaLogica.EliminarAsync
+var tieneTareasAsociadas = await _contexto.TodoItems
+    .AnyAsync(t => t.CategoriaId == id);
+
+if (tieneTareasAsociadas)
+    throw new InvalidOperationException(
+        $"No se puede eliminar la categoría con Id {id} porque tiene tareas asociadas.");
+
+// En UsuarioAsignadoLogica.EliminarAsync  
+var tieneTareasAsociadas = await _contexto.TodoItems
+    .AnyAsync(t => t.UsuarioAsignadoId == id);
+
+if (tieneTareasAsociadas)
+    throw new InvalidOperationException(
+        $"No se puede eliminar el usuario asignado con Id {id} porque tiene tareas asociadas.");
+```
+
+#### Cómo identificar relaciones:
+
+1. Revisar `Models/<Recurso>.cs` — buscar propiedades de navegación `ICollection<T>`
+2. Revisar todos los `Models/*.cs` — buscar FKs que apunten al recurso actual
+3. Revisar `AppDbContext.cs` — buscar configuraciones Fluent API con relaciones
+
+#### Respuesta HTTP:
+
+El controlador debe capturar `InvalidOperationException` y devolver `400 Bad Request` con el mensaje de error (ver skill `controlador`).
+
+> **Regla de oro:** Si un recurso tiene dependencias, **SIEMPRE validar antes de eliminar**. Esto previene violaciones de integridad referencial y errores `500 Internal Server Error` difíciles de diagnosticar.
+
 ### Paso 4 — Generar la interfaz e implementación por recurso
 
 Crear los ficheros `I<Recurso>Logica.cs` y `<Recurso>Logica.cs` dentro de `LogicaNegocio/`.

@@ -91,6 +91,86 @@ if (entidad.<NuevaFK>Id.HasValue &&
 
 **Regla general:** Por cada FK nullable añadida a un modelo, la lógica que crea/actualiza esa entidad debe validar la existencia del recurso referenciado. Esto evita errores de violación de FK en SQLite que se manifiestan como `500 Internal Server Error` en lugar de `400 Bad Request`.
 
+### Paso 3.5 — Validar dependencias antes de eliminar (Integridad Referencial)
+
+**OBLIGATORIO para todo método `EliminarAsync` de un recurso que tenga dependencias.**
+
+Cuando un recurso tiene relaciones 1:N (otras entidades tienen una FK apuntando a él), **validar que no existan registros dependientes antes de eliminar**. Si existen, lanzar `InvalidOperationException`.
+
+#### Patrón obligatorio:
+
+```csharp
+public async Task<bool> EliminarAsync(int id)
+{
+    var existente = await _contexto.<Recurso>s.FindAsync(id);
+    if (existente is null)
+        return false;
+
+    // ✅ Validar dependencias ANTES de eliminar
+    var tieneDependientes = await _contexto.<EntidadDependiente>s
+        .AnyAsync(e => e.<RecursoId> == id);
+
+    if (tieneDependientes)
+        throw new InvalidOperationException(
+            $"No se puede eliminar el {nombreRecurso} con Id {id} porque tiene {nombreDependientes} asociados.");
+
+    _contexto.<Recurso>s.Remove(existente);
+    await _contexto.SaveChangesAsync();
+    return true;
+}
+```
+
+#### Cuándo aplicar:
+
+- ✅ Siempre que otras entidades tengan una FK apuntando al recurso actual
+- ✅ Aunque el análisis-diseño no lo mencione explícitamente
+- ✅ Aunque la FK sea nullable (prevenir eliminación de datos referenciados)
+- ✅ Aunque la relación esté configurada con `SetNull` en el modelo
+
+#### Ejemplos del proyecto:
+
+```csharp
+// En CategoriaLogica.EliminarAsync
+var tieneTareasAsociadas = await _contexto.TodoItems
+    .AnyAsync(t => t.CategoriaId == id);
+
+if (tieneTareasAsociadas)
+    throw new InvalidOperationException(
+        $"No se puede eliminar la categoría con Id {id} porque tiene tareas asociadas.");
+
+// En UsuarioAsignadoLogica.EliminarAsync
+var tieneTareasAsociadas = await _contexto.TodoItems
+    .AnyAsync(t => t.UsuarioAsignadoId == id);
+
+if (tieneTareasAsociadas)
+    throw new InvalidOperationException(
+        $"No se puede eliminar el usuario asignado con Id {id} porque tiene tareas asociadas.");
+```
+
+#### Manejo en el controlador:
+
+El controlador debe capturar `InvalidOperationException` y devolver `400 Bad Request`:
+
+```csharp
+[HttpDelete("{id}")]
+public async Task<IActionResult> Eliminar(int id)
+{
+    try
+    {
+        var eliminado = await _servicio.EliminarAsync(id);
+        if (!eliminado)
+            return NotFound();
+        return NoContent();
+    }
+    catch (InvalidOperationException ex)
+    {
+        return BadRequest(new { error = ex.Message });
+    }
+}
+```
+
+> **Regla de oro:** Si el recurso tiene dependencias, **SIEMPRE validar antes de eliminar**. Esto previene violaciones de integridad referencial que se manifiestan como errores `500 Internal Server Error` difíciles de diagnosticar y datos huérfanos en la base de datos.
+
 ### Paso 4 — Añadir reglas de negocio específicas del análisis
 
 Revisar la sección 5 del análisis en busca de reglas de negocio adicionales. Ejemplos habituales:
