@@ -1,5 +1,8 @@
 name: Integración Continua
 
+permissions:
+  contents: write
+
 on:
   push:
     branches: [ main, develop ]
@@ -29,6 +32,12 @@ jobs:
     - name: Ejecutar tests con cobertura
       run: dotnet test --no-build --configuration Release --verbosity normal --collect:"XPlat Code Coverage" --results-directory TestResults
 
+    - name: Instalar ReportGenerator
+      run: dotnet tool install --tool-path ./.tools dotnet-reportgenerator-globaltool
+
+    - name: Generar informe HTML de cobertura
+      run: ./.tools/reportgenerator -reports:TestResults/**/coverage.cobertura.xml -targetdir:coverage-report -reporttypes:HtmlSummary
+
     - name: Subir resultados de tests y cobertura
       if: always()
       uses: actions/upload-artifact@v4
@@ -36,7 +45,17 @@ jobs:
         name: backend-test-results
         path: |
           TestResults/
+          coverage-report/
         retention-days: 7
+
+    - name: Publicar informe de cobertura en rama dedicada
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      uses: peaceiris/actions-gh-pages@v4
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./coverage-report
+        publish_branch: coverage-reports
+        allow_empty_commit: false
   
   frontend:
     name: Frontend (React + Vite)
