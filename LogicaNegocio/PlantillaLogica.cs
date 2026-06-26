@@ -13,7 +13,7 @@ public class PlantillaLogica : IPlantillaLogica
         _contexto = contexto;
     }
 
-    public async Task<IEnumerable<PlantillaTarea>> ObtenerTodasAsync()
+    public async Task<IEnumerable<PlantillaTarea>> ObtenerTodosAsync()
         => await _contexto.PlantillasTarea.ToListAsync();
 
     public async Task<PlantillaTarea?> ObtenerPorIdAsync(int id)

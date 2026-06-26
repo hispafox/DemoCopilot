@@ -4,7 +4,7 @@ namespace AppTodoList.Services;
 
 public interface IPlantillaService
 {
-    Task<IEnumerable<PlantillaDto>> ObtenerTodasAsync();
+    Task<IEnumerable<PlantillaDto>> ObtenerTodosAsync();
     Task<PlantillaDto?> ObtenerPorIdAsync(int id);
     Task<PlantillaDto> CrearAsync(CrearPlantillaDto dto);
     Task<PlantillaDto?> ActualizarAsync(int id, ActualizarPlantillaDto dto);
