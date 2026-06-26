@@ -45,6 +45,14 @@ public class UsuarioAsignadoLogica : IUsuarioAsignadoLogica
         if (existente is null)
             return false;
 
+        // Validación: no se puede eliminar un usuario con tareas asociadas
+        var tieneTareasAsociadas = await _contexto.TodoItems
+            .AnyAsync(t => t.UsuarioAsignadoId == id);
+
+        if (tieneTareasAsociadas)
+            throw new InvalidOperationException(
+                $"No se puede eliminar el usuario asignado con Id {id} porque tiene tareas asociadas.");
+
         _contexto.UsuariosAsignados.Remove(existente);
         await _contexto.SaveChangesAsync();
         return true;
