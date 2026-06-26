@@ -50,9 +50,16 @@ public class UsuariosAsignadosController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<ActionResult> Eliminar(int id)
     {
-        var eliminado = await _servicio.EliminarAsync(id);
-        if (!eliminado)
-            return NotFound();
-        return NoContent();
+        try
+        {
+            var eliminado = await _servicio.EliminarAsync(id);
+            if (!eliminado)
+                return NotFound();
+            return NoContent();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
     }
 }
