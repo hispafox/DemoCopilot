@@ -46,6 +46,13 @@ public class PlantillaLogica : IPlantillaLogica
         if (existente is null)
             return false;
 
+        var tieneTareasAsociadas = await _contexto.TodoItems
+            .AnyAsync(t => t.PlantillaId == id);
+
+        if (tieneTareasAsociadas)
+            throw new InvalidOperationException(
+                $"No se puede eliminar la plantilla con Id {id} porque tiene tareas instanciadas.");
+
         _contexto.PlantillasTarea.Remove(existente);
         await _contexto.SaveChangesAsync();
         return true;
