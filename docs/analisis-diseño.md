@@ -231,6 +231,48 @@ public enum TipoRecurrencia
 | DELETE | `/api/categorias/{id}` | Eliminar una categoría | `204 No Content` | `404` si no existe, `400` si tiene tareas asociadas |
 | GET | `/api/tareas?categoriaId={id}` | Filtrar tareas por categoría | `200` + array de `TodoItem` | — |
 
+### Health Checks — `/health`
+
+| Verbo | Ruta | Descripción | Respuesta OK | Error |
+|---|---|---|---|---|
+| GET | `/health` | Verificar estado de la aplicación y conectividad con la base de datos | `200` + JSON con `status: "Healthy"` y detalles de checks | `503` con `status: "Unhealthy"` si la base de datos no es accesible |
+
+**Respuesta exitosa (200 OK):**
+```json
+{
+  "status": "Healthy",
+  "totalDuration": "00:00:00.0123456",
+  "entries": [
+    {
+      "name": "database",
+      "status": "Healthy",
+      "duration": "00:00:00.0098765",
+      "description": null,
+      "data": {}
+    }
+  ]
+}
+```
+
+**Respuesta de fallo (503 Service Unavailable):**
+```json
+{
+  "status": "Unhealthy",
+  "totalDuration": "00:00:05.1234567",
+  "entries": [
+    {
+      "name": "database",
+      "status": "Unhealthy",
+      "duration": "00:00:05.1234567",
+      "description": "Unable to connect to the database",
+      "data": {}
+    }
+  ]
+}
+```
+
+**Nota:** El endpoint es público (sin autenticación) para permitir que orquestadores externos (Azure App Service, Kubernetes, Docker) verifiquen el estado sin credenciales.
+
 ---
 
 ## 6. Datos de ejemplo
