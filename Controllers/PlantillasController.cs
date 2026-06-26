@@ -16,9 +16,9 @@ public class PlantillasController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<PlantillaDto>>> ObtenerTodas()
+    public async Task<ActionResult<IEnumerable<PlantillaDto>>> ObtenerTodos()
     {
-        var plantillas = await _servicio.ObtenerTodasAsync();
+        var plantillas = await _servicio.ObtenerTodosAsync();
         return Ok(plantillas);
     }
 

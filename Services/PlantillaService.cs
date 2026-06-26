@@ -13,9 +13,9 @@ public class PlantillaService : IPlantillaService
         _logica = logica;
     }
 
-    public async Task<IEnumerable<PlantillaDto>> ObtenerTodasAsync()
+    public async Task<IEnumerable<PlantillaDto>> ObtenerTodosAsync()
     {
-        var entidades = await _logica.ObtenerTodasAsync();
+        var entidades = await _logica.ObtenerTodosAsync();
         return entidades.Select(MapearADto);
     }
 

@@ -4,7 +4,7 @@ namespace AppTodoList.LogicaNegocio;
 
 public interface IPlantillaLogica
 {
-    Task<IEnumerable<PlantillaTarea>> ObtenerTodasAsync();
+    Task<IEnumerable<PlantillaTarea>> ObtenerTodosAsync();
     Task<PlantillaTarea?> ObtenerPorIdAsync(int id);
     Task<PlantillaTarea> CrearAsync(PlantillaTarea entidad);
     Task<PlantillaTarea?> ActualizarAsync(int id, PlantillaTarea entidad);
