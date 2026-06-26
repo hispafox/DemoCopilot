@@ -13,10 +13,12 @@ Tú hablas con uno solo. Ese uno reparte.
 ```mermaid
 flowchart LR
     U([👤 Usuario]) -->|@orquestador funcionalidad| O[🧭 Orquestador<br/>agente coordinador]
+    U -.->|@orquestador issue #N| O
     O -->|agent| P[🔎 Planificador<br/>subagente]
     O -->|agent| D[⚙️ Desarrollador<br/>subagente]
     O -->|agent| V[✅ Verificador<br/>subagente]
     O -->|git| GH[(🐙 Git<br/>commit + push)]
+    O -.->|github MCP| GHI[(🐙 GitHub<br/>issues + PRs)]
 
     P -.escribe.-> PL[/docs/plan-*.md/]
     D -.edita.-> C[/*.cs/]
@@ -27,7 +29,7 @@ flowchart LR
     classDef ext fill:#6e40c9,color:#fff,stroke:#0b3d91;
     class O orq;
     class P,D,V sub;
-    class GH ext;
+    class GH,GHI ext;
 ```
 
 El orquestador es el único que toca Git. Los tres especialistas ni se enteran de que se va a hacer commit: lo suyo es leer, planear, escribir código y dar un veredicto. Esa separación es a propósito, y enseguida verás por qué importa.
@@ -199,7 +201,7 @@ Sin argumento, audita toda la aplicación.
 
 ## 6. Lo que pasa en Git
 
-El trabajo se commitea directamente en la rama en la que estés (normalmente `main`). No crea branches automáticamente.
+El trabajo se commitea directamente en la rama en la que estés (normalmente `main`). No crea branches automáticamente **en modo normal**.
 
 ```mermaid
 gitGraph
@@ -207,6 +209,156 @@ gitGraph
     commit id: "feat: filtro por estado" tag: "orquestador"
     commit id: "siguiente feature"
 ```
+
+---
+
+## 6.5. Flujo basado en GitHub Issues (opcional)
+
+Cuando invocas al orquestador con `@orquestador-democopilot issue #N` (o simplemente `#N`), entra en **Modo Issue** y ejecuta un flujo completo de desarrollo basado en GitHub Issues:
+
+### Qué cambia en Modo Issue
+
+| Aspecto | Modo Normal | Modo Issue |
+|---------|-------------|-----------|
+| **Rama** | Usa la actual (normalmente `main`) | Crea rama `feature/issue-N-<slug>` desde `main` |
+| **Commit** | Mensaje corto `feat: <descripción>` | Mensaje con referencia al issue (`Closes #N`) |
+| **Push** | `git push` (rama actual) | `git push origin feature/issue-N-<slug>` |
+| **PR** | No crea | Crea automáticamente hacia `main` |
+| **Issue** | No interactúa | Comenta con link al PR |
+
+### Flujo completo en Modo Issue
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as 👤 Usuario
+    participant O as 🧭 Orquestador
+    participant GH as 🐙 GitHub
+    participant P as 🔎 Planificador
+    participant D as ⚙️ Desarrollador
+    participant V as ✅ Verificador
+    participant G as 🐙 Git
+
+    U->>O: @orquestador issue #15
+    O->>GH: leer issue #15 (MCP)
+    GH-->>O: título + descripción
+
+    O->>G: verificar rama actual
+    alt no está en main
+        O->>U: ¿volver a main?
+        U-->>O: sí
+        O->>G: git checkout main
+    end
+
+    O->>GH: crear rama feature/issue-15-<slug>
+    O->>G: git checkout feature/issue-15-<slug>
+
+    O->>P: agent(planificador, descripción del issue)
+    P-->>O: docs/plan-<slug>.md
+
+    O->>D: agent(desarrollador, plan)
+    D-->>O: código implementado
+
+    loop Hasta APROBADO (máx. 3)
+        O->>V: agent(verificador, plan)
+        V-->>O: APROBADO / REVISAR
+    end
+
+    O->>G: git add + commit + push origin feature/issue-15-<slug>
+    O->>GH: crear PR hacia main (MCP)
+    GH-->>O: PR #27 creado
+    O->>GH: comentar en issue #15 con link a PR
+    O-->>U: Resumen + link al PR
+```
+
+### Convenciones de nombres
+
+**Ramas feature:**
+```
+feature/issue-15-indices-fks
+feature/issue-8-authorize-endpoints
+feature/issue-23-paginacion-tareas
+```
+
+Formato: `feature/issue-<N>-<slug>` donde `<slug>` es kebab-case del título del issue.
+
+**Commits:**
+```
+feat: añadir índices en FKs
+
+Implementa validación de referencias foráneas en TodoItems.
+Ver plan completo en docs/plan-indices-fks.md.
+
+Closes #15
+```
+
+La palabra clave `Closes #15` vincula automáticamente el commit al issue. Cuando el PR se hace merge, GitHub cierra el issue automáticamente.
+
+### Template de PR generado
+
+El orquestador usa `.github/PULL_REQUEST_TEMPLATE.md` para estructurar el cuerpo del PR:
+
+- **Issue relacionado:** `Closes #N` (vinculación automática)
+- **Plan de implementación:** Link a `docs/plan-<slug>.md`
+- **Cambios realizados:** Lista de ficheros modificados agrupados por capa (Models, DTOs, Controllers, etc.)
+- **Verificación:** Estado del verificador (iteraciones, dotnet build)
+- **Checklist pre-merge:** Items para el revisor humano
+
+### ¿Qué pasa si el verificador da REVISAR tras 3 iteraciones?
+
+En Modo Normal, el orquestador para sin hacer commit. En Modo Issue, hace lo siguiente:
+
+1. Commit con mensaje `WIP: issue #N (verificación pendiente)`
+2. Push a la rama feature
+3. Crea PR en **modo draft** (borrador)
+4. Comenta en el issue:
+   ```
+   ⚠️ Implementación inicial completada pero requiere revisión manual
+   
+   Pull Request (borrador): #PR_NUMBER
+   Plan: docs/plan-<slug>.md
+   
+   Problemas pendientes:
+   - [lista de problemas del verificador]
+   ```
+
+De esta forma, el trabajo queda visible en GitHub pero marcado como "necesita atención humana".
+
+### Verificaciones previas
+
+El orquestador verifica:
+- **Estás en `main`** antes de crear la rama feature (si no, pregunta si quieres volver)
+- **El remote es correcto** con `git remote -v` antes de llamar a GitHub MCP
+- **El issue existe y está abierto** antes de continuar
+
+### Skill auxiliar: `github-flow`
+
+Opcionalmente, puedes invocar operaciones de GitHub de forma aislada con el skill:
+
+```
+@github-flow leer-issue 15
+@github-flow crear-rama 15 indices-fks
+@github-flow crear-pr 15 feature/issue-15-indices-fks docs/plan-indices-fks.md
+@github-flow comentar-issue 15 "✅ PR creado"
+```
+
+El orquestador usa este skill internamente en Modo Issue.
+
+### Requisitos
+
+- **MCP GitHub configurado:** Las herramientas `mcp_github_mcp_se_*` deben estar disponibles
+- **Acceso al repositorio:** Debes tener permisos para crear ramas y PRs
+- **Git configurado:** `git remote -v` debe devolver `hispafox/DemoCopilot` (o tu fork)
+
+### Cuándo usar Modo Issue vs. Modo Normal
+
+| Situación | Modo recomendado |
+|-----------|------------------|
+| Desarrollo en solitario, cambios rápidos | **Normal** (commit directo a main) |
+| Quieres code review antes de merge | **Issue** (crea PR automático) |
+| Rastrear progreso de auditoría de calidad | **Issue** (vincula cada issue → PR) |
+| Desarrollo en equipo | **Issue** (flujo estándar de PRs) |
+| Prototipado rápido | **Normal** (menos overhead) |
 
 ---
 

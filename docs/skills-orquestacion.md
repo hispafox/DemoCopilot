@@ -71,8 +71,11 @@ flowchart TD
 | `controlador` | `Controllers/` | Capa HTTP: recibe peticiones, llama al servicio, devuelve respuesta |
 | `ui-ux-pro-max` | — | **VALORAR ANTES DE FRONTEND.** Catálogo de patrones UI/UX, heurísticas de usabilidad, accesibilidad y mejores prácticas para validar diseño antes de escribir código React |
 | `frontend-react` | `frontend/` | Frontend React + Vite + TypeScript: tipos, servicios fetch, páginas y componentes |
+| `github-flow` | — | **SOLO USADO POR ORQUESTADOR.** Encapsula operaciones GitHub MCP (leer issues, crear ramas, crear PRs, comentar). Usado automáticamente en Modo Issue (`@orquestador issue #N`). |
 | `actualizar-documentacion` | `docs/` | **Sincronizar docs con código.** Mantiene actualizada la documentación técnica cuando cambian agentes, skills o arquitectura. Corrige diagramas Mermaid problemáticos |
 | `commit-message` | — | Genera el mensaje de commit siguiendo convenciones del proyecto |
+
+**Nota:** El skill `github-flow` **no es invocado por el desarrollador**. Es usado directamente por el orquestador cuando detecta un issue de GitHub en el input del usuario. Ver sección 2.5 para detalles.
 
 ---
 
@@ -123,6 +126,40 @@ flowchart TD
     style FR fill:#fdf4ff,stroke:#7c3aed
     style CM fill:#f1f5f9,stroke:#64748b
 ```
+
+---
+
+## 2.5. Skill especial: `github-flow` (usado por el orquestador)
+
+El skill `github-flow` **NO forma parte del flujo de desarrollo estándar** de capas. Es un skill auxiliar usado exclusivamente por el **orquestador** en Modo Issue.
+
+**Cuándo se usa:**
+- Usuario invoca `@orquestador-democopilot issue #15` o `@orquestador-democopilot #15`
+- El orquestador detecta el número de issue
+- Invoca `github-flow` para:
+  1. Leer el issue desde GitHub
+  2. Crear rama `feature/issue-N-<slug>` desde `main`
+  3. Crear PR hacia `main` tras implementación exitosa
+  4. Comentar en el issue con link al PR
+
+**Arquitectura:**
+```mermaid
+flowchart TD
+    U([Usuario]) --> O[Orquestador]
+    O -.-> GF[github-flow skill]
+    GF --> GM[(GitHub MCP)]
+    O --> P[Planificador]
+    O --> D[Desarrollador]
+    O --> V[Verificador]
+
+    style O fill:#1f6feb,color:#fff
+    style GF fill:#6e40c9,color:#fff,stroke:#4b1e7e,stroke-width:2px
+    style P fill:#238636,color:#fff
+    style D fill:#238636,color:#fff
+    style V fill:#238636,color:#fff
+```
+
+**El desarrollador nunca invoca `github-flow`** — solo se usa en Modo Issue del orquestador. Los skills de desarrollo (modelo, dto, controlador, etc.) siguen ejecutándose en su orden habitual.
 
 ---
 

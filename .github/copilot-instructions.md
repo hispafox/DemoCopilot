@@ -77,6 +77,7 @@ dotnet ef database update
 | `controlador` | Crear o actualizar `Controllers/` |
 | `ui-ux-pro-max` | **Consultar ANTES de implementar frontend.** Catálogo de patrones de diseño UI/UX, heurísticas de usabilidad y mejores prácticas. Úsalo para validar diseño de componentes, flujos de usuario, accesibilidad y experiencia antes de escribir código React. |
 | `frontend-react` | Crear o actualizar el frontend React + Vite + TypeScript en `frontend/` |
+| `github-flow` | **SOLO USADO POR ORQUESTADOR.** Encapsula operaciones GitHub (leer issues, crear ramas, PRs, comentarios). Usado automáticamente cuando invocas `@orquestador issue #N`. |
 | `actualizar-documentacion` | **Sincronizar docs con código.** Mantiene actualizada la documentación técnica (`ARQUITECTURA-AGENTES.md`, `skills-orquestacion.md`) cuando cambien agentes, skills o arquitectura. Corrige diagramas Mermaid problemáticos. |
 | `commit-message` | Generar el mensaje de commit |
 | `estimacion-proyecto` | Generar `docs/insights-proyecto.xlsx` con estimaciones de esfuerzo, comparativa con/sin Copilot, modelo de datos y endpoints |
@@ -85,13 +86,47 @@ dotnet ef database update
 
 | Agente | Cuándo usarlo |
 |---|---|
+| `@orquestador-democopilot` | **Ciclo completo de desarrollo.** Coordina planificación → implementación → verificación → commit. Soporta Modo Normal (commit directo) y Modo Issue (crea rama + PR automático). Invocar con `@orquestador <feature>` o `@orquestador issue #N`. |
 | `@planificador-democopilot` | Planificar una feature nueva, generar `docs/plan-*.md` |
 | `@desarrollador-democopilot` | Implementar un plan de `docs/plan-*.md` capa a capa |
 | `@verificador-democopilot` | Verificar que la implementación de un plan es correcta |
 | `@auditor-calidad` | **Auditoría completa de calidad:** code smells, deuda técnica, SOLID, seguridad, convenciones. Genera informe markdown + issues de GitHub (si MCP configurado). Modo abogado del diablo. |
 | `@documentador-usuario` | **Generar y actualizar documentación de usuario** en docx, pdf o markdown. Analiza el proyecto, detecta cambios, documenta funcionalidades con lenguaje claro y placeholders para capturas. |
 
-## Reglas para la demo
+## Flujo con GitHub Issues
+
+El orquestador soporta **Modo Issue** para trabajar desde issues de GitHub:
+
+```bash
+# Modo Normal (commit directo a rama actual)
+@orquestador-democopilot añadir paginación a tareas
+
+# Modo Issue (crea rama + PR automático)
+@orquestador-democopilot issue #15
+@orquestador-democopilot #15  # también válido
+```
+
+**Modo Issue ejecuta:**
+1. Lee el issue desde GitHub
+2. Crea rama `feature/issue-N-<slug>` desde `main`
+3. Ejecuta ciclo completo (planificador → desarrollador → verificador)
+4. Commit + push a la rama feature
+5. Crea PR hacia `main` con referencia al issue (`Closes #N`)
+6. Comenta en el issue con link al PR
+
+**Cuándo usar Modo Issue:**
+- Desarrollo en equipo (requiere code review antes de merge)
+- Rastrear progreso de auditoría de calidad (vincular cada issue → PR)
+- Queremos trazabilidad issue → branch → PR → merge
+
+**Cuándo usar Modo Normal:**
+- Desarrollo en solitario con cambios rápidos
+- Prototipado sin necesidad de revisión
+- Menor overhead (sin ramas ni PRs)
+
+Ver documentación completa en [`docs/ARQUITECTURA-AGENTES.md`](docs/ARQUITECTURA-AGENTES.md) sección 6.5.
+
+---
 
 - **Cada feature nueva lleva su test** — no crear issues separados para tests.
 - Mantener el código simple: si hay una forma más corta de hacer algo, úsala.
