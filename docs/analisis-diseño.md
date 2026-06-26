@@ -121,7 +121,7 @@ public class UsuarioAsignado
 }
 ```
 
-Relación: un `UsuarioAsignado` puede tener muchas tareas (`TodoItem`). La FK en `TodoItem` es opcional (`SetNull` al eliminar el usuario).
+Relación: un `UsuarioAsignado` puede tener muchas tareas (`TodoItem`). La FK en `TodoItem` es opcional. **Validación de integridad**: no se puede eliminar un usuario asignado si tiene tareas asociadas (evita pérdida de información de auditoría).
 
 ---
 
@@ -207,7 +207,7 @@ public enum TipoRecurrencia
 | GET | `/api/usuariosasignados/{id}` | Obtener un usuario por ID | `200` + `UsuarioAsignado` | `404` si no existe |
 | POST | `/api/usuariosasignados` | Crear un usuario nuevo | `201` + `UsuarioAsignado` creado | `400` si datos inválidos |
 | PUT | `/api/usuariosasignados/{id}` | Actualizar nombre o email | `200` + `UsuarioAsignado` actualizado | `404` / `400` |
-| DELETE | `/api/usuariosasignados/{id}` | Eliminar un usuario (las tareas asociadas quedan sin usuario asignado) | `204 No Content` | `404` si no existe |
+| DELETE | `/api/usuariosasignados/{id}` | Eliminar un usuario asignado | `204 No Content` | `404` si no existe, `400` si tiene tareas asociadas |
 
 ### Plantillas — `/api/plantillas`
 
@@ -258,6 +258,7 @@ Cada vez que se añade una entidad nueva, se actualizan los datos de ejemplo en 
 - **Relación opcional `TodoItem → PlantillaTarea`**: la FK `PlantillaId` es nullable; las tareas creadas manualmente no necesitan plantilla.
 - **Sistema de categorías con relación 1:N**: una categoría puede tener muchas tareas, pero cada tarea solo puede tener una categoría. La FK `CategoriaId` es nullable para mantener compatibilidad con tareas existentes sin categoría.
 - **Validación de eliminación de categorías**: no se puede eliminar una categoría si tiene tareas asociadas activas. El sistema retorna `400 Bad Request` con mensaje descriptivo.
+- **Validación de eliminación de usuarios asignados**: no se puede eliminar un usuario asignado si tiene tareas asociadas. El sistema retorna `400 Bad Request` con mensaje descriptivo. Esto previene pérdida de información de auditoría (quién tenía asignada la tarea) y mantiene la integridad referencial.
 - **Color en formato hexadecimal**: el campo `Color` de la categoría usa formato estándar hex (#RRGGBB) para facilitar la visualización consistente en frontend.
 - **Sin paginación ni autenticación**: fuera del alcance de la demo; añadir solo si se solicita explícitamente.
 - **Código en castellano**: nombres de clases, métodos y variables en español para coherencia con el público hispanohablante del curso.
