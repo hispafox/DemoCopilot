@@ -30,3 +30,13 @@ Conectar con base de datos
 4-Crear datos de ejemplo                       → incluido en el skill `base-de-datos` (Paso 6 — seeder)
 
 
+Tests y Cobertura
+----------------
+1-Ejecutar tests                               → `dotnet test`
+2-Generar informe HTML de cobertura en local   → `.\generar-informe-cobertura.ps1`
+   - Ejecuta los tests con cobertura
+   - Genera informe HTML en `coverage-report/index.html`
+   - Abre el informe automáticamente en el navegador
+3-Ver cobertura de CI                          → Descargar artefacto `backend-test-results` desde GitHub Actions
+
+
