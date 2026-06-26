@@ -182,53 +182,67 @@ Archivo generado: `docs/manual-usuario.md`
 
 #### Opción B: Salida en Word (.docx)
 
-**Usar el skill `docx` para generar el documento profesional.**
+**Flujo de generación automática con skill `docx`:**
 
-Pasos:
-1. Leer el contenido de `docs/manual-usuario.md`
-2. Invocar el skill `docx` con instrucciones para:
-   - Crear documento con portada (título, versión, fecha)
-   - Generar tabla de contenidos automática
-   - Aplicar estilos de encabezado (Heading 1, Heading 2, Heading 3)
-   - Convertir placeholders de texto en cuadros de imagen vacíos con texto descriptivo
-   - Aplicar numeración de secciones
-   - Añadir encabezados y pies de página
+1. **Invocar el skill `docx`** para generar un script Node.js profesional:
+   ```
+   Usa el skill docx para convertir docs/manual-usuario.md a docs/manual-usuario.docx
+   con formato profesional: portada, tabla de contenidos, estilos de encabezado,
+   placeholders como imágenes vacías con texto descriptivo.
+   
+   Genera el script en docs/generar_manual_usuario.js
+   ```
 
-Invocar:
-```
-Usa el skill docx para convertir docs/manual-usuario.md a docs/manual-usuario.docx
-con formato profesional: portada, tabla de contenidos, estilos de encabezado,
-placeholders como imágenes vacías con texto descriptivo.
-```
+2. **Ejecutar el script generado automáticamente:**
+   ```powershell
+   cd c:\w\repos\DemoCopilot\docs
+   node generar_manual_usuario.js
+   ```
+   
+3. **Verificar que el archivo se generó correctamente:**
+   - Comprobar que existe `docs/manual-usuario.docx`
+   - Confirmar al usuario que el documento está listo
+
+**Ventajas de este enfoque:**
+- El skill `docx` genera un script con formato profesional optimizado
+- El script se ejecuta automáticamente sin intervención manual
+- El script queda versionado para regeneraciones futuras
 
 Archivo generado: `docs/manual-usuario.docx`
 
 #### Opción C: Salida en PDF (.pdf)
 
-**Opción 1 (recomendada): Usar Pandoc**
+**Flujo de generación automática con skill `pdf`:**
 
-Pandoc convierte Markdown a PDF con formato profesional usando LaTeX.
+1. **Invocar el skill `pdf`** para generar un script Python profesional:
+   ```
+   Usa el skill pdf para convertir docs/manual-usuario.md a docs/manual-usuario.pdf
+   con formato profesional: portada, tabla de contenidos, estilos de encabezado,
+   numeración de páginas, encabezados y pies de página.
+   
+   Genera el script en docs/generar_manual_usuario_pdf.py
+   ```
 
-```bash
-pandoc docs/manual-usuario.md -o docs/manual-usuario.pdf \
-  --toc --toc-depth=3 \
-  --number-sections \
-  --metadata title="Manual de Usuario — DemoCopilot" \
-  --metadata author="Equipo DemoCopilot" \
-  --metadata date="2026-06-26" \
-  -V geometry:margin=2.5cm \
-  -V linkcolor:blue
-```
+2. **Instalar dependencias de Python** (si no están instaladas):
+   ```powershell
+   "C:\Users\hispa\AppData\Local\Python\bin\python.exe" -m pip install reportlab markdown2
+   ```
 
-**Opción 2 (si se necesita control fino): Usar el skill `pdf`**
+3. **Ejecutar el script generado automáticamente:**
+   ```powershell
+   cd c:\w\repos\DemoCopilot\docs
+   "C:\Users\hispa\AppData\Local\Python\bin\python.exe" generar_manual_usuario_pdf.py
+   ```
 
-Solo si el usuario requiere control específico sobre el layout, fuentes, o estructura del PDF.
+4. **Verificar que el archivo se generó correctamente:**
+   - Comprobar que existe `docs/manual-usuario.pdf`
+   - Confirmar al usuario que el documento está listo
 
-Invocar:
-```
-Usa el skill pdf para convertir docs/manual-usuario.md a docs/manual-usuario.pdf
-con control específico sobre: [especificar requisitos del usuario].
-```
+**Ventajas de este enfoque:**
+- El skill `pdf` genera un script con formato profesional optimizado
+- El script se ejecuta automáticamente sin intervención manual
+- El script queda versionado para regeneraciones futuras
+- Control fino sobre layout, fuentes, tablas y estructura del PDF
 
 Archivo generado: `docs/manual-usuario.pdf`
 
@@ -356,25 +370,33 @@ Genera `docs/guia-rapida.md` con una guía rápida de inicio (solo funcionalidad
 @documentador-usuario docx cambios
 ```
 Genera `docs/changelog-manual-usuario.md` con cambios desde la última versión, luego lo convierte a `.docx` usando el skill `docx`.
-
----
-
-## Interacción con otros agentes y skills
-
-- **NO invocar directamente otros agentes** — este agente trabaja de forma independiente.
-- **SÍ usar skills auxiliares obligatoriamente**:
-  - **Skill `docx`** — SIEMPRE que el formato sea Word (.docx), leer el skill completo y seguir sus instrucciones para generar documentos profesionales con docx-js
-  - **Skill `pdf`** — Si el usuario requiere control fino sobre el layout del PDF (opcional, Pandoc es suficiente para la mayoría de casos)
+invocar el skill para generar el script Node.js con formato profesional, luego ejecutarlo automáticamente
+  - **Skill `pdf`** — SIEMPRE que el formato sea PDF (.pdf), invocar el skill para generar el script Python con formato profesional, luego ejecutarlo automáticamente
   
-**Flujo de uso de skills:**
+**Flujo de uso de skills (automatizado):**
 
 1. **Para formato docx:**
    ```
-   Paso 1: Generar docs/manual-usuario.md
-   Paso 2: Leer skill docx completo
-   Paso 3: Seguir las instrucciones del skill para convertir Markdown → .docx con docx-js
+   Paso 1: Generar docs/manual-usuario.md (fuente de verdad)
+   Paso 2: Invocar skill docx → genera docs/generar_manual_usuario.js
+   Paso 3: Ejecutar node generar_manual_usuario.js → produce docs/manual-usuario.docx
    Paso 4: Validar el .docx generado
    ```
+
+2. **Para formato pdf:**
+   ```
+   Paso 1: Generar docs/manual-usuario.md (fuente de verdad)
+   Paso 2: Invocar skill pdf → genera docs/generar_manual_usuario_pdf.py
+   Paso 3: Instalar dependencias Python si no están presentes
+   Paso 4: Ejecutar python generar_manual_usuario_pdf.py → produce docs/manual-usuario.pdf
+   Paso 5: Validar el .pdf generado
+   ```
+
+**Ventajas de este enfoque híbrido:**
+- Los skills generan scripts con formato profesional y control fino
+- La ejecución automática elimina la intervención manual
+- Los scripts quedan versionados para regeneraciones futuras
+- El usuario puede ejecutar los scripts manualmente más tarde si quiere actualizar los documentos
 
 2. **Para formato pdf:**
    ```
