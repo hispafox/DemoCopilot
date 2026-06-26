@@ -50,4 +50,23 @@ public class PlantillaLogicaTests
         // Assert
         resultado.Should().BeNull();
     }
+
+    [Fact]
+    public async Task EliminarAsync_ConTareasAsociadas_LanzaInvalidOperationException()
+    {
+        // Arrange
+        await using var contexto = CrearContexto(nameof(EliminarAsync_ConTareasAsociadas_LanzaInvalidOperationException));
+        contexto.PlantillasTarea.Add(new PlantillaTarea { Id = 1, Titulo = "Plantilla", EsRepetitiva = true, Recurrencia = TipoRecurrencia.Semanal });
+        contexto.TodoItems.Add(new TodoItem { Id = 10, Title = "Tarea instanciada", PlantillaId = 1 });
+        await contexto.SaveChangesAsync();
+
+        var logica = new PlantillaLogica(contexto);
+
+        // Act
+        Func<Task> accion = async () => await logica.EliminarAsync(1);
+
+        // Assert
+        await accion.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("*porque tiene tareas instanciadas*");
+    }
 }

@@ -50,10 +50,17 @@ public class PlantillasController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<ActionResult> Eliminar(int id)
     {
-        var eliminada = await _servicio.EliminarAsync(id);
-        if (!eliminada)
-            return NotFound();
-        return NoContent();
+        try
+        {
+            var eliminada = await _servicio.EliminarAsync(id);
+            if (!eliminada)
+                return NotFound();
+            return NoContent();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
     }
 
     [HttpPost("{id}/instanciar")]
